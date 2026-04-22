@@ -1,0 +1,113 @@
+openapi: 3.0.3
+info:
+  title: Common Components
+  version: 1.0.0
+
+components:
+  schemas:
+    Address:
+      type: object
+      required: [addressId, isPrimary, addressLine1, addressLine2, poBoxNumber, city, stateCode, postalCode, countryCode, timeZone]
+      properties:
+        addressId:
+          type: string
+        isPrimary:
+          type: boolean
+        addressLine1:
+          type: string
+        addressLine2:
+          type: string
+        poBoxNumber:
+          type: string
+        city:
+          type: string
+        stateCode:
+          type: string
+        postalCode:
+          type: string
+        countryCode:
+          type: string
+        timeZone:
+          type: string
+      example:
+        addressId: "Addr123"
+        addressLine1: "123 A"
+        addressLine2: "Suite 100"
+        poBoxNumber: "PO Box 456"
+        city: "Hyderabad"
+        stateCode: "TG"
+        postalCode: "500005"
+        countryCode: "IN"
+        timeZone: "IST"
+
+    Phone:
+      type: object
+      required: [phoneId, isPrimary, phoneType, phoneNumber,phoneExtension]
+      properties:
+        phoneId:
+          type: string
+        isPrimary:
+          type: boolean
+        phoneType:
+          type: string
+        phoneNumber:
+          type: string
+        phoneExtension:
+          type: string
+      example:
+        id: "Phone123"
+        phoneType: "mobile"
+        phoneNumber: "123-456-7890"
+        phoneExtension: "101"
+        isPrimary: true
+
+    Email:
+      type: object
+      required: [emailId, email, isPrimary]
+      properties:
+        isPrimary:
+          type: boolean
+        emailId:
+          type: string
+        email:
+          type: string
+          format: email
+      example:
+        id: "Email123"
+        email: "test1@gmail.com"
+
+    Contact:
+      type: object
+      required: [id, firstName, lastName, contactType, contactEmail]
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        contactType:
+          type: string
+          enum: [Primary, Secondary, Other]
+        contactEmail:
+          type: string
+          format: email
+        contactPhone:
+          type: string
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        isActive:
+          type: boolean
+          
+    Error:
+      type: object
+      required: [message, code]
+      properties:
+        message:
+          type: string
+        details:
+          type: string
+        code:
+          type: integer

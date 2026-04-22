@@ -1,0 +1,204 @@
+openapi: 3.0.3
+info:
+  title: Supplier Management API
+  description: REST API for Supplier Management System
+  version: 1.0.0
+  contact:
+    name: HS Supplier Management Team
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: SupplierMgmt
+    description: Supplier management master data
+paths:
+  /supplier:
+    get:
+      tags: [Supplier]
+      operationId: getAllSuppliers
+      summary: List all suppliers
+      description: Retrieve paginated list of raw suppliers
+      responses:
+        '200':
+          description: Successfully retrieved suppliers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+    post:
+      tags: [Supplier]
+      operationId: createSupplier
+      summary: Create a new supplier
+      description: Create a new supplier record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Supplier'
+      responses:
+        '201':
+          description: Supplier created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        '400':
+          description: Invalid input
+
+  /supplier/{supplierCode}:
+    parameters:
+      - $ref: '#/components/parameters/supplierParam'
+    get:
+      tags: [Supplier]
+      operationId: getSupplierById
+      summary: Get supplier by ID
+      description: Retrieve a specific supplier by its ID
+      responses:
+        '200':
+          description: Supplier found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        '404':
+          description: Supplier not found
+    put:
+      tags: [Supplier]
+      operationId: updateSupplier
+      summary: Update supplier
+      description: Update an existing supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Supplier'
+      responses:
+        '200':
+          description: Supplier updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        '404':
+          description: Supplier not found
+    delete:
+      tags: [Supplier]
+      operationId: deleteSupplier
+      summary: Delete supplier
+      description: Delete a supplier by its ID
+      responses:
+        '204':
+          description: Supplier deleted successfully
+        '404':
+          description: Supplier not found
+
+components:
+  parameters:
+    supplierParam:
+      name: supplierCode
+      in: path
+      required: true
+      description: Supplier key
+      schema:
+        type: string
+
+  schemas:
+    Supplier:
+      type: object
+      required:
+        - supplierCode
+        - supplierName
+        - supplierCategory
+        - supplierGroup
+        - legalEntityId
+        - gstNumber
+        - panNumber
+        - effectiveDate
+        - endDate
+        - paymentTerm
+      properties:
+        supplierCode:
+          type: string
+          maxLength: 40
+        supplierName:
+          type: string
+          maxLength: 255
+        supplierCategory:
+          type: string
+          maxLength: 50
+        supplierGroup:
+          type: string
+          maxLength: 40
+        legalEntityId:
+          type: string
+          maxLength: 40
+        gstNumber:
+          type: string
+          maxLength: 15
+        panNumber:
+          type: string
+          maxLength: 10
+        effectiveDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        paymentTerm:
+          type: string
+          maxLength: 20
+        addresses:
+          type: array
+          items:
+            $ref: './common.yaml#/components/schemas/Address'
+        phones:
+          type: array
+          items:
+            $ref: './common.yaml#/components/schemas/Phone'
+        emails:
+          type: array
+          items:
+            $ref: './common.yaml#/components/schemas/Email'
+
+    PageSupplier:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Supplier'
+        pageable:
+          type: object
+          properties:
+            pageNumber:
+              type: integer
+            pageSize:
+              type: integer
+            sort:
+              type: object
+            offset:
+              type: integer
+            paged:
+              type: boolean
+            unpaged:
+              type: boolean
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        last:
+          type: boolean
+        first:
+          type: boolean
+        numberOfElements:
+          type: integer
+        size:
+          type: integer
+        sort:
+          type: object
+        empty:
+          type: boolean
