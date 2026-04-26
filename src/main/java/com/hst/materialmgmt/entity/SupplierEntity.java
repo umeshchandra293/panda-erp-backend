@@ -22,7 +22,7 @@ import lombok.experimental.SuperBuilder;
 @Accessors(chain = true)
 @ToString
 @SuperBuilder
-@Table(value = "rm_supplier_tbl", schema = "erp_finance_schema")
+@Table(value = "rm_supplier_tbl", schema = "rm_material_schema")
 public class SupplierEntity extends BaseEntity {
 
   @Column("supplier_code")

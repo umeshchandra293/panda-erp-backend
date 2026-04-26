@@ -19,7 +19,7 @@ import lombok.experimental.SuperBuilder;
 @Accessors(chain = true)
 @ToString
 @SuperBuilder
-@Table(value = "rm_supplier_phone_link", schema = "erp_finance_schema")
+@Table(value = "rm_supplier_phone_link", schema = "rm_material_schema")
 public class SupplierPhoneEntity extends BaseEntity {
 	
 	@Id

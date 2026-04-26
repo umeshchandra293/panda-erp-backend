@@ -18,7 +18,7 @@ import lombok.experimental.SuperBuilder;
 @Accessors(chain = true)
 @ToString
 @SuperBuilder
-@Table(value = "rm_phone_tbl", schema = "erp_finance_schema")
+@Table(value = "rm_phone_tbl", schema = "rm_material_schema")
 public class PhoneEntity extends BaseEntity {
 
 	@Column("phone_id")
