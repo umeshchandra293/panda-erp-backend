@@ -8,7 +8,7 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
 @Component
-public class SupplierRowMapper  extends BaseRowMapper<SupplierEntity>{
+public class SupplierRowMapper extends BaseRowMapper<SupplierEntity>{
 	@Override
 	public SupplierEntity apply(Row row, RowMetadata rowMetadata) {
 	    SupplierEntity entity =

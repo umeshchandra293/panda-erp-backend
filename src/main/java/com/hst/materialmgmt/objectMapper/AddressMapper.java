@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.hs.api.model.Address;
+import com.hst.api.model.Address;
 import com.hst.materialmgmt.entity.AddressEntity;
 import com.hst.materialmgmt.entity.BaseEntity;
 

@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS "rm_material_schema".rm_material_order_detail_tbl (
     order_detail_id  VARCHAR(40) NOT NULL PRIMARY KEY,
     order_id         VARCHAR(40) NOT NULL,
     material_id      VARCHAR(40) NOT NULL,
-    order_quantity   VARCHAR(40) NOT NULL,
+    order_quantity   DECIMAL(10, 4) NOT NULL,
     unit_price       DECIMAL(10, 4) NOT NULL,
     qty_received     DECIMAL(12, 2) DEFAULT 0,
     line_total       DECIMAL(12, 2) NOT NULL,

@@ -2,7 +2,7 @@ package com.hst.materialmgmt.objectMapper;
 
 import org.springframework.stereotype.Component;
 
-import com.hs.api.model.Supplier;
+import com.hst.api.model.Supplier;
 import com.hst.materialmgmt.entity.BaseEntity;
 import com.hst.materialmgmt.entity.SupplierEntity;
 

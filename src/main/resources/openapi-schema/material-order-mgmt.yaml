@@ -1,0 +1,284 @@
+openapi: 3.0.3
+info:
+  title: Raw Material Procurement API
+  version: 1.0.0
+  description: OpenAPI schema for Raw Material Order and Order Detail tables.
+
+servers:
+  - url: http://localhost:8080/api/v1
+
+tags:
+  - name: MaterialOrders
+    description: Purchase order header operations
+  - name: MaterialOrderDetails
+    description: Purchase order line operations
+
+paths:
+  /material-orders:
+    get:
+      tags: [MaterialOrders]
+      summary: List material orders
+      operationId: getAllMaterialOrders
+      responses:
+        "200":
+          description: Paged list of orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaterialOrderPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+    post:
+      tags: [MaterialOrders]
+      summary: Create a material order (header + optional details)
+      operationId: createMaterialOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaterialOrder"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaterialOrder"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /material-orders/{orderId}:
+    get:
+      tags: [MaterialOrders]
+      summary: Get a material order by ID
+      operationId: getMaterialOrderById
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string, maxLength: 40 }
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaterialOrder"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [MaterialOrders]
+      summary: Update a material order (header fields)
+      operationId: updateMaterialOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string, maxLength: 40 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaterialOrder"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaterialOrder"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+    delete:
+      tags: [MaterialOrders]
+      summary: Delete a material order
+      operationId: deleteMaterialOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string, maxLength: 40 }
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Conflict (duplicate keys or invalid state transitions)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    # -------------------------
+    # Common
+    # -------------------------
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+      required: [timestamp, status, error, message]
+
+    Money:
+      type: number
+      format: double
+      description: Decimal monetary amount (maps to DECIMAL in DB)
+
+    DecimalQty:
+      type: number
+      format: double
+      description: Decimal quantity (maps to DECIMAL in DB)
+
+    # -------------------------
+    # Order (Header)
+    # -------------------------
+    MaterialOrder:
+      type: object
+      required: [orderId, orderNumber, supplierCode, createdBy, updatedBy]
+      properties:
+        orderId:
+          type: string
+          maxLength: 40
+        orderNumber:
+          type: string
+          maxLength: 40
+        supplierCode:
+          type: string
+          maxLength: 40
+        orderDate:
+          type: string
+          format: date-time
+          description: If omitted, defaults to DB current timestamp
+        exptdDeliDate:
+          type: string
+          format: date
+        actualDeliDate:
+          type: string
+          format: date
+        status:
+          type: string
+          maxLength: 50
+          default: Draft
+        totalAmount:
+          $ref: "#/components/schemas/Money"
+        ordCreatedBy:
+          type: string
+          maxLength: 100
+        approvedBy:
+          type: string
+          maxLength: 100
+        notes:
+          type: string
+          maxLength: 1024
+        createdBy:
+          type: string
+          maxLength: 40
+        updatedBy:
+          type: string
+          maxLength: 40
+        details:
+          type: array
+          description: Optional - create order details with the order
+          items:
+            $ref: "#/components/schemas/MaterialOrderDetail"
+
+    MaterialOrderPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/MaterialOrder"
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+      required: [content, page, size, totalElements, totalPages]
+
+    # -------------------------
+    # Order Detail (Lines)
+    # -------------------------
+    MaterialOrderDetail:
+      type: object
+      required:
+        - orderDetailId
+        - materialId
+        - orderQuantity
+        - unitPrice
+        - lineTotal
+        - createdBy
+        - updatedBy
+      properties:
+        orderDetailId:
+          type: string
+          maxLength: 40
+        materialId:
+          type: string
+          maxLength: 40
+        orderQuantity:
+          type: number
+          format: double
+          description: Maps to DECIMAL(10,4)
+        unitPrice:
+          type: number
+          format: double
+          description: Maps to DECIMAL(10,4)
+        qtyReceived:
+          type: number
+          format: double
+          description: Maps to DECIMAL(10,4)
+        lineTotal:
+          type: number
+          format: double
+          description: Maps to DECIMAL(10,4)
+        status:
+          type: string
+          maxLength: 50
+          default: Pending
+        createdBy:
+          type: string
+          maxLength: 40
+        updatedBy:
+          type: string
+          maxLength: 40
