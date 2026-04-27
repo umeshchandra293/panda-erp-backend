@@ -12,7 +12,7 @@
 		<version>4.0.2</version>
 		<relativePath/>
 	</parent>
-	<groupId>com.hs</groupId>
+	<groupId>com.hst</groupId>
     <artifactId>materialmgmt</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 	<name>hst-material-service</name>
@@ -161,6 +161,14 @@
 							<inputSpec>${openapi.schema.dir}/supplier-mgmt.yaml</inputSpec>
 						</configuration>
 					</execution>
+					<execution>
+						<id>material-order</id>
+						<goals><goal>generate</goal></goals>
+						<configuration>
+							<inputSpec>${openapi.schema.dir}/material-order-mgmt.yaml</inputSpec>
+						</configuration>
+					</execution>
+
 				</executions>
 			</plugin>
 			<plugin>

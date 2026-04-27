@@ -59,9 +59,12 @@ public class SupplierEntity extends BaseEntity {
     return supplierCode;
   }
 
-  @Transient private List<BaseEntity> addressEntities;
+  @Transient 
+  private List<BaseEntity> addressEntities;
 
-  @Transient private List<BaseEntity> phoneEntities;
+  @Transient 
+  private List<BaseEntity> phoneEntities;
 
-  @Transient private List<BaseEntity> emailEntities;
+  @Transient 
+  private List<BaseEntity> emailEntities;
 }
