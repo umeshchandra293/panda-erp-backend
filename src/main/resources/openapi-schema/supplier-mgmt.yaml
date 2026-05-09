@@ -1,204 +1,404 @@
 openapi: 3.0.3
 info:
   title: Supplier Management API
-  description: REST API for Supplier Management System
+  description: |
+    Supplier master data and supplier-material mapping for the HS ERP.
+
+    Supplier codes are server-generated (format: SUPP-XXXXXX, sequential).
+    Mapping IDs are server-generated.
   version: 1.0.0
   contact:
     name: HS Supplier Management Team
 servers:
-  - url: http://localhost:8080
-    description: Local development server
+  - url: http://localhost:8080/api/finance
+    description: Local dev
 
 tags:
-  - name: SupplierMgmt
-    description: Supplier management master data
+  - name: Supplier
+    description: Supplier master data
+  - name: SupplierMaterial
+    description: Supplier-material mappings (negotiated price, MOQ, GST per pair)
+
 paths:
-  /supplier:
+
+  /suppliers:
     get:
       tags: [Supplier]
       operationId: getAllSuppliers
       summary: List all suppliers
-      description: Retrieve paginated list of raw suppliers
+      parameters:
+        - name: isActive
+          in: query
+          required: false
+          schema: { type: boolean }
+        - name: category
+          in: query
+          required: false
+          schema: { type: string }
       responses:
         '200':
-          description: Successfully retrieved suppliers
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Supplier'
+                type: array
+                items: { $ref: '#/components/schemas/Supplier' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
     post:
       tags: [Supplier]
       operationId: createSupplier
       summary: Create a new supplier
-      description: Create a new supplier record
+      description: |
+        `supplierCode` is server-generated and MUST NOT be included in the request body.
+        `effectiveDate` defaults to today if omitted.
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/Supplier'
+            schema: { $ref: '#/components/schemas/Supplier' }
       responses:
         '201':
-          description: Supplier created successfully
+          description: Created
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Supplier'
-        '400':
-          description: Invalid input
+              schema: { $ref: '#/components/schemas/Supplier' }
+          headers:
+            Location:
+              schema: { type: string }
+              description: URI of the created supplier
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/ServerError' }
 
-  /supplier/{supplierCode}:
+  /suppliers/{supplierCode}:
     parameters:
-      - $ref: '#/components/parameters/supplierParam'
+      - $ref: '#/components/parameters/supplierCodeParam'
     get:
       tags: [Supplier]
-      operationId: getSupplierById
-      summary: Get supplier by ID
-      description: Retrieve a specific supplier by its ID
+      operationId: getSupplierByCode
+      summary: Get a supplier by code
       responses:
         '200':
-          description: Supplier found
+          description: OK
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Supplier'
-        '404':
-          description: Supplier not found
+              schema: { $ref: '#/components/schemas/Supplier' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
     put:
       tags: [Supplier]
       operationId: updateSupplier
-      summary: Update supplier
-      description: Update an existing supplier
+      summary: Update an existing supplier
+      description: |
+        Replaces the supplier and its addresses/phones/emails.
+        Existing nested rows must include their IDs; new rows must not.
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/Supplier'
+            schema: { $ref: '#/components/schemas/Supplier' }
       responses:
         '200':
-          description: Supplier updated successfully
+          description: OK
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Supplier'
-        '404':
-          description: Supplier not found
+              schema: { $ref: '#/components/schemas/Supplier' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
     delete:
       tags: [Supplier]
       operationId: deleteSupplier
-      summary: Delete supplier
-      description: Delete a supplier by its ID
+      summary: Delete a supplier (cascades to addresses/phones/emails/mappings)
       responses:
-        '204':
-          description: Supplier deleted successfully
-        '404':
-          description: Supplier not found
+        '204': { description: No Content }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /suppliers/{supplierCode}/materials:
+    parameters:
+      - $ref: '#/components/parameters/supplierCodeParam'
+    get:
+      tags: [SupplierMaterial]
+      operationId: getSupplierMaterials
+      summary: List materials this supplier supplies (powers PO form dropdown)
+      parameters:
+        - name: isActive
+          in: query
+          required: false
+          schema: { type: boolean, default: true }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SupplierMaterialMapping' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+    post:
+      tags: [SupplierMaterial]
+      operationId: addSupplierMaterial
+      summary: Map a material to this supplier with negotiated terms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SupplierMaterialMapping' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SupplierMaterialMapping' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Mapping already exists
+          content:
+            application/json:
+              schema: { $ref: './common.yaml#/components/schemas/Problem' }
+
+  /suppliers/{supplierCode}/materials/{materialId}:
+    parameters:
+      - $ref: '#/components/parameters/supplierCodeParam'
+      - $ref: '#/components/parameters/materialIdParam'
+    put:
+      tags: [SupplierMaterial]
+      operationId: updateSupplierMaterial
+      summary: Update mapping (price, MOQ, GST, etc.)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SupplierMaterialMapping' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SupplierMaterialMapping' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+    delete:
+      tags: [SupplierMaterial]
+      operationId: removeSupplierMaterial
+      summary: Remove a material mapping from this supplier
+      responses:
+        '204': { description: No Content }
+        '404': { $ref: '#/components/responses/NotFound' }
 
 components:
+
   parameters:
-    supplierParam:
+    supplierCodeParam:
       name: supplierCode
       in: path
       required: true
-      description: Supplier key
       schema:
         type: string
+        maxLength: 40
+        example: SUPP-000001
+
+    materialIdParam:
+      name: materialId
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 40
+
+  responses:
+    BadRequest:
+      description: Invalid input
+      content:
+        application/json:
+          schema: { $ref: './common.yaml#/components/schemas/Problem' }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: './common.yaml#/components/schemas/Problem' }
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema: { $ref: './common.yaml#/components/schemas/Problem' }
 
   schemas:
+
     Supplier:
       type: object
       required:
-        - supplierCode
         - supplierName
         - supplierCategory
-        - supplierGroup
-        - legalEntityId
-        - gstNumber
-        - panNumber
-        - effectiveDate
-        - endDate
+        - stateCode
         - paymentTerm
       properties:
         supplierCode:
           type: string
+          readOnly: true
           maxLength: 40
+          description: Server-generated. Format SUPP-NNNNNN.
+          example: SUPP-000001
         supplierName:
           type: string
           maxLength: 255
+          example: U.S. STERILES
         supplierCategory:
           type: string
-          maxLength: 50
+          enum: [CHEMICALS, PACKAGING, BRANDING, CAPS, LABELS, INGREDIENTS, EQUIPMENT, SERVICES, OTHER]
+          example: CHEMICALS
         supplierGroup:
           type: string
           maxLength: 40
+          description: Free-form sub-grouping (e.g. "Food-grade", "Domestic")
         legalEntityId:
           type: string
           maxLength: 40
+        contactPersonName:
+          type: string
+          maxLength: 100
+          example: Makkala Sridhar
         gstNumber:
           type: string
           maxLength: 15
+          pattern: '^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$'
+          example: 27ADYPS0976L1ZF
+        gstRegistrationType:
+          type: string
+          enum: [REGULAR, COMPOSITION, UNREGISTERED]
+          default: REGULAR
         panNumber:
           type: string
           maxLength: 10
+          pattern: '^[A-Z]{5}[0-9]{4}[A-Z]{1}$'
+          example: ADYPS0976L
+        stateCode:
+          type: string
+          maxLength: 2
+          pattern: '^[0-9]{2}$'
+          description: |
+            2-digit GST state code of the supplier's primary place of business.
+            Used to determine IGST vs CGST+SGST on POs/invoices.
+          example: "27"
+        countryCode:
+          type: string
+          maxLength: 20
+          default: IN
+        leadTimeDays:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 7
+          example: 7
+        paymentTerm:
+          type: string
+          enum: [ADVANCE_100, ADVANCE_50, NET_15, NET_30, NET_45, NET_60, COD]
+          example: NET_30
         effectiveDate:
           type: string
           format: date
+          description: Defaults to today on create if omitted
         endDate:
           type: string
           format: date
-        paymentTerm:
-          type: string
-          maxLength: 20
+        isActive:
+          type: boolean
+          default: true
         addresses:
           type: array
-          items:
-            $ref: './common.yaml#/components/schemas/Address'
+          items: { $ref: './common.yaml#/components/schemas/Address' }
         phones:
           type: array
-          items:
-            $ref: './common.yaml#/components/schemas/Phone'
+          items: { $ref: './common.yaml#/components/schemas/Phone' }
         emails:
           type: array
-          items:
-            $ref: './common.yaml#/components/schemas/Email'
+          items: { $ref: './common.yaml#/components/schemas/Email' }
 
-    PageSupplier:
+    SupplierMaterialMapping:
       type: object
+      required:
+        - materialId
+        - agreedPrice
+        - uom
+        - hsnSacCode
+        - gstRate
       properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/Supplier'
-        pageable:
-          type: object
-          properties:
-            pageNumber:
-              type: integer
-            pageSize:
-              type: integer
-            sort:
-              type: object
-            offset:
-              type: integer
-            paged:
-              type: boolean
-            unpaged:
-              type: boolean
-        totalElements:
+        mappingId:
+          type: string
+          readOnly: true
+          maxLength: 40
+        supplierCode:
+          type: string
+          readOnly: true
+          description: From the path
+        materialId:
+          type: string
+          maxLength: 40
+        materialName:
+          type: string
+          readOnly: true
+          description: Joined from material master for convenience
+        agreedPrice:
+          type: number
+          format: double
+          minimum: 0
+          example: 257.00
+        uom:
+          type: string
+          enum: [KG, GM, LTR, ML, PCS, BOX, BAG, ROLL, METER]
+          example: KG
+        packSize:
+          type: number
+          format: double
+          minimum: 0
+          description: |
+            Number of base units per pack (e.g. 8000 for "1 box = 8000 caps").
+          example: 8000
+        packUom:
+          type: string
+          enum: [BOX, BAG, ROLL, CARTON, BUNDLE, DRUM]
+          example: BOX
+        minOrderQty:
+          type: number
+          format: double
+          minimum: 0
+          default: 1
+          example: 30
+        hsnSacCode:
+          type: string
+          pattern: '^[0-9]{4,8}$'
+          description: HSN code (goods) or SAC code (services) for GST
+          example: "28369990"
+        gstRate:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: "Applicable GST rate as percentage. Typical Indian rates are 0, 5, 12, 18, 28."
+          example: 18
+        leadTimeDays:
           type: integer
-          format: int64
-        totalPages:
-          type: integer
-        last:
+          format: int32
+          minimum: 0
+          description: Override for supplier default. Omit to use supplier's leadTimeDays.
+        currencyCode:
+          type: string
+          maxLength: 3
+          default: INR
+        effectiveDate:
+          type: string
+          format: date
+          description: Defaults to today on create
+        expiryDate:
+          type: string
+          format: date
+        isActive:
           type: boolean
-        first:
-          type: boolean
-        numberOfElements:
-          type: integer
-        size:
-          type: integer
-        sort:
-          type: object
-        empty:
-          type: boolean
+          default: true

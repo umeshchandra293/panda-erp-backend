@@ -1,0 +1,60 @@
+package com.hst.materialmgmt.objectMapper;
+
+import org.springframework.stereotype.Component;
+
+import com.hs.api.model.PurchaseOrderSummary;
+import com.hs.api.model.PurchaseOrderRequest;
+import com.hst.materialmgmt.entity.BaseEntity;
+import com.hst.materialmgmt.entity.PurchaseOrderEntity;
+
+@Component
+public class PurchaseOrderMapper extends BaseMapper {
+    
+    @Override
+    public BaseEntity toEntity(Object modelObject, Object entityObject, boolean isNew) {
+        PurchaseOrderEntity entity = (entityObject != null) ? 
+            (PurchaseOrderEntity) entityObject : new PurchaseOrderEntity();
+            
+        if (modelObject == null) {
+            return entity;
+        }
+        
+        PurchaseOrderRequest request = (PurchaseOrderRequest) modelObject;
+        
+        if (isNew) {
+            entity.setPoId(populateId(entity.getPoId())); // Auto-generate ID if new
+        }
+        
+        entity.setSupplierCode(request.getSupplierId());
+        entity.setExpectedDeliveryDate(request.getExpectedDate());
+        entity.setNotes(request.getNotes());
+        
+        return entity; 
+    }
+    
+   @Override
+    public Object toModel(Object entityObject) {
+        if (entityObject == null) {
+            return new PurchaseOrderSummary(); 
+        }
+        
+        PurchaseOrderEntity entity = (PurchaseOrderEntity) entityObject;
+        PurchaseOrderSummary summary = new PurchaseOrderSummary();
+        
+        summary.setId(entity.getPoId());
+        summary.setSupplier(entity.getSupplierCode());
+        summary.setDate(entity.getOrderDate());
+        summary.setDelivery(entity.getExpectedDeliveryDate());
+        
+        // Safely convert the Double to a BigDecimal
+        if (entity.getTotalAmount() != null) {
+            summary.setTotal(java.math.BigDecimal.valueOf(entity.getTotalAmount()));
+        } else {
+            summary.setTotal(java.math.BigDecimal.ZERO);
+        }
+        
+        summary.setStatus(entity.getStatus());
+        
+        return summary;
+    }
+}

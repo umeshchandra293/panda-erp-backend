@@ -1,6 +1,7 @@
 package com.hst.materialmgmt.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,72 +13,77 @@ import com.hs.api.model.Supplier;
 import com.hst.materialmgmt.service.SupplierService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/finance")
 @Tag(name = "Supplier API", description = "Endpoints for supplier operations")
 public class SupplierController extends BaseController implements SupplierApi {
-	
-	  @Autowired
-	  private  SupplierService supplierService;
 
-	  @Override
-	  public Mono<ResponseEntity<Void>> deleteSupplier(String supplierKey, ServerWebExchange exchange) {
-	    return delete(supplierService, supplierKey, exchange);
-	  }
+    private static final Logger log = LoggerFactory.getLogger(SupplierController.class);
 
-	  @Override
-	  public Mono<ResponseEntity<Supplier>> getAllSuppliers(ServerWebExchange exchange) {
-		  return findAll(supplierService, exchange)
-		      .cast(Supplier.class)
-		      .next()
-		      .map(ResponseEntity::ok)
-		      .defaultIfEmpty(ResponseEntity.notFound().build())
-		      .onErrorReturn(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
-	  }
-	  
-	  /**
-	   * Retrieves an organization by its unique key.
-	   *
-	   * @param orgKey The unique key of the organization to retrieve.
-	   * @param exchange The server web exchange.
-	   * @return A Mono that emits the organization wrapped in a ResponseEntity.
-	   */
-	  @Override
-	  public Mono<ResponseEntity<Supplier>> getSupplierById(String supplierKey, ServerWebExchange exchange) {
-	    return findByKey(supplierService, supplierKey, exchange)
-	        .cast(Supplier.class) // Casts the Mono<Object> to Mono<Organization>
-	        .map(ResponseEntity::ok)
-	        .defaultIfEmpty(ResponseEntity.notFound().build());
-	  }
+    private final SupplierService supplierService;
 
-	  /**
-	   * Creates a new organization.
-	   *
-	   * @param organization The organization to create.
-	   * @param exchange The server web exchange.
-	   * @return A Mono that emits the created organization wrapped in a ResponseEntity.
-	   */
-	  @Override
-	  public Mono<ResponseEntity<Supplier>> createSupplier(
-	      Mono<Supplier> supplier, ServerWebExchange exchange) {
-	    return create(supplierService, supplier.cast(Object.class), exchange)
-	        .cast(Supplier.class) // Casts the Mono<Object> to Mono<Organization>
-	        .map(
-	            newOrg ->
-	                ResponseEntity.status(HttpStatus.CREATED)
-	                    .body(newOrg)); // 201 Created for new resource
-	  }
+    public SupplierController(SupplierService supplierService) {
+        this.supplierService = supplierService;
+    }
 
-	  @Override
-	  public Mono<ResponseEntity<Supplier>> updateSupplier(String supplierKey, Mono<Supplier> supplier, ServerWebExchange exchange) {
-	    return update(supplierService, supplierKey, supplier.cast(Object.class), exchange)
-	        .cast(Supplier.class) // Casts the Mono<Object> to Mono<Organization>
-	        .map(ResponseEntity::ok) // 200 OK with the updated organization
-	        .defaultIfEmpty(
-	            ResponseEntity.notFound()
-	                .build()); // 404 Not Found if the organization to update doesn't exist
-	  }
+    @Override
+    public Mono<ResponseEntity<Void>> deleteSupplier(
+            String supplierCode, ServerWebExchange exchange) {
+        return delete(supplierService, supplierCode, exchange);
+    }
 
+    @Override
+    public Mono<ResponseEntity<Flux<Supplier>>> getAllSuppliers(
+            Boolean isActive, String category, ServerWebExchange exchange) {
+
+        Flux<Supplier> supplierFlux = findAll(supplierService, exchange)
+                .cast(Supplier.class)
+                .filter(s -> isActive == null || isActive.equals(s.getIsActive()))
+                .filter(s -> category == null
+                        || (s.getSupplierCategory() != null
+                                && category.equalsIgnoreCase(s.getSupplierCategory().name())));
+
+        return Mono.just(ResponseEntity.ok(supplierFlux));
+    }
+
+    @Override
+    public Mono<ResponseEntity<Supplier>> getSupplierByCode(
+            String supplierCode, ServerWebExchange exchange) {
+        return findByKey(supplierService, supplierCode, exchange)
+                .cast(Supplier.class)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+
+    @Override
+    public Mono<ResponseEntity<Supplier>> createSupplier(
+            Mono<Supplier> supplier, ServerWebExchange exchange) {
+
+        Mono<Object> genericMono = supplier.cast(Object.class);
+
+        return create(supplierService, genericMono, exchange)
+                .cast(Supplier.class)
+                .map(saved -> ResponseEntity.status(HttpStatus.CREATED).body(saved))
+                .doOnError(e -> log.error("Failed to create supplier", e));
+    }
+
+    @Override
+    public Mono<ResponseEntity<Supplier>> updateSupplier(
+            String supplierCode, Mono<Supplier> supplier, ServerWebExchange exchange) {
+
+        Mono<Object> genericMono = supplier
+                .map(s -> {
+                    s.setSupplierCode(supplierCode);
+                    return (Object) s;
+                });
+
+        return update(supplierService, supplierCode, genericMono, exchange)
+                .cast(Supplier.class)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build())
+                .doOnError(e -> log.error("Failed to update supplier {}", supplierCode, e));
+    }
 }

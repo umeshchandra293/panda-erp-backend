@@ -1,113 +1,135 @@
 openapi: 3.0.3
 info:
-  title: Common Components
+  title: HS Common Schemas
   version: 1.0.0
 
 components:
   schemas:
+
     Address:
       type: object
-      required: [addressId, isPrimary, addressLine1, addressLine2, poBoxNumber, city, stateCode, postalCode, countryCode, timeZone]
+      required: [addressLine1, city, stateCode, postalCode, countryCode, addressType]
       properties:
         addressId:
           type: string
-        isPrimary:
-          type: boolean
+          maxLength: 40
+          description: Server-generated on create; required on update to identify existing rows
+        addressType:
+          type: string
+          enum: [REGISTERED, FACTORY, BILLING, SHIPPING]
+          description: |
+            REGISTERED = legal/registered office (per GST registration)
+            FACTORY    = manufacturing site
+            BILLING    = invoicing address
+            SHIPPING   = goods despatch address
         addressLine1:
           type: string
+          maxLength: 100
         addressLine2:
           type: string
+          maxLength: 100
         poBoxNumber:
           type: string
+          maxLength: 20
         city:
           type: string
+          maxLength: 60
         stateCode:
           type: string
+          maxLength: 40
+          description: GST state code (e.g. "27" for Maharashtra, "36" for Telangana)
+          example: "36"
         postalCode:
           type: string
+          maxLength: 20
+          example: "503206"
         countryCode:
           type: string
+          maxLength: 20
+          default: IN
+          example: IN
         timeZone:
           type: string
-      example:
-        addressId: "Addr123"
-        addressLine1: "123 A"
-        addressLine2: "Suite 100"
-        poBoxNumber: "PO Box 456"
-        city: "Hyderabad"
-        stateCode: "TG"
-        postalCode: "500005"
-        countryCode: "IN"
-        timeZone: "IST"
+          maxLength: 20
+        isPrimary:
+          type: boolean
+          default: false
 
     Phone:
       type: object
-      required: [phoneId, isPrimary, phoneType, phoneNumber,phoneExtension]
+      required: [phoneType, phoneNumber]
       properties:
         phoneId:
           type: string
-        isPrimary:
-          type: boolean
+          maxLength: 40
         phoneType:
           type: string
+          maxLength: 10
+          description: One of WORK, MOBILE, FAX, HOME (enforced by DB CHECK constraint)
+          example: WORK
         phoneNumber:
           type: string
+          maxLength: 20
+          example: "+91 6305308696"
         phoneExtension:
           type: string
-      example:
-        id: "Phone123"
-        phoneType: "mobile"
-        phoneNumber: "123-456-7890"
-        phoneExtension: "101"
-        isPrimary: true
+          maxLength: 6
+        isPrimary:
+          type: boolean
+          default: false
 
     Email:
       type: object
-      required: [emailId, email, isPrimary]
+      required: [email]
       properties:
-        isPrimary:
-          type: boolean
         emailId:
           type: string
+          maxLength: 40
         email:
           type: string
           format: email
-      example:
-        id: "Email123"
-        email: "test1@gmail.com"
-
-    Contact:
-      type: object
-      required: [id, firstName, lastName, contactType, contactEmail]
-      properties:
-        id:
-          type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
-        contactType:
-          type: string
-          enum: [Primary, Secondary, Other]
-        contactEmail:
-          type: string
-          format: email
-        contactPhone:
-          type: string
-        addresses:
-          type: array
-          items:
-            $ref: '#/components/schemas/Address'
-        isActive:
+          maxLength: 255
+          example: pandawater17@gmail.com
+        isPrimary:
           type: boolean
-          
-    Error:
+          default: false
+
+    Problem:
       type: object
-      required: [message, code]
+      description: RFC 7807-style error response
+      required: [status, title]
       properties:
-        message:
+        type:
           type: string
-        details:
+          format: uri
+          example: "about:blank"
+        title:
           type: string
-        code:
+          example: "Validation Failed"
+        status:
           type: integer
+          format: int32
+          example: 400
+        detail:
+          type: string
+          example: "supplier.gstNumber must match GSTIN format"
+        instance:
+          type: string
+          example: "/api/finance/suppliers"
+        timestamp:
+          type: string
+          format: date-time
+        errors:
+          type: array
+          description: Field-level validation errors (only present for 400)
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "gstNumber"
+              message:
+                type: string
+                example: "Invalid GSTIN format"
+              rejectedValue:
+                type: string

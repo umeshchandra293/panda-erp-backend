@@ -1,5 +1,9 @@
 {
   "reactive": true,
   "interfaceOnly": true,
-  "useBeanValidation": false
+  "useBeanValidation": false,
+  "useSpringBoot3": true,
+  "useTags": true,
+  "skipDefaultInterface": true,
+  "documentationProvider": "springdoc"
 }

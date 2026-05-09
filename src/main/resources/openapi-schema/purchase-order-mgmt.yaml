@@ -1,0 +1,79 @@
+openapi: 3.0.3
+info:
+  title: Purchase Order API
+  description: REST API for Purchase Order Management
+  version: 1.0.0
+
+paths:
+  /procurement/orders:
+    get:
+      tags: [PurchaseOrder]
+      operationId: getAllPurchaseOrders
+      summary: List all POs
+      responses:
+        '200':
+          description: Successfully retrieved POs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseOrderSummary'
+    post:
+      tags: [PurchaseOrder]
+      operationId: createPurchaseOrder
+      summary: Create a new PO
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseOrderRequest'
+      responses:
+        '201':
+          description: PO created successfully
+
+components:
+  schemas:
+    PurchaseOrderSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        supplier:
+          type: string
+        date:
+          type: string
+          format: date
+        delivery:
+          type: string
+          format: date
+        total:
+          type: number
+        status:
+          type: string
+
+    PurchaseOrderItemReq:
+      type: object
+      properties:
+        materialId:
+          type: string
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+
+    PurchaseOrderRequest:
+      type: object
+      properties:
+        supplierId:
+          type: string
+        expectedDate:
+          type: string
+          format: date
+        notes:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseOrderItemReq'

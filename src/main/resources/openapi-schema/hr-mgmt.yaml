@@ -1,0 +1,227 @@
+openapi: 3.0.3
+info:
+  title: HR Management API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api
+
+tags:
+  - name: HRSalesman
+  - name: HRTarget
+
+paths:
+
+  /hr/salesmen:
+    get:
+      tags: [HRSalesman]
+      operationId: getAllSalesmen
+      summary: List all salesmen
+      parameters:
+        - name: isActive
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesmanProfile'
+    post:
+      tags: [HRSalesman]
+      operationId: createSalesman
+      summary: Create a new salesman account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesmanProfile'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesmanProfile'
+
+  /hr/salesmen/{salesmanId}:
+    parameters:
+      - name: salesmanId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [HRSalesman]
+      operationId: getSalesmanById
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesmanProfile'
+        '404':
+          description: Not found
+    put:
+      tags: [HRSalesman]
+      operationId: updateSalesman
+      summary: Update salesman — assign route, deactivate, change details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesmanProfile'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesmanProfile'
+
+  /hr/routes:
+    get:
+      tags: [HRSalesman]
+      operationId: getAllRoutes
+      summary: List all routes for assignment dropdown
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesRoute'
+
+  /hr/targets:
+    get:
+      tags: [HRTarget]
+      operationId: getTargets
+      summary: Get targets for a salesman on a date range
+      parameters:
+        - name: salesmanId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DailyTarget'
+    post:
+      tags: [HRTarget]
+      operationId: setTarget
+      summary: Set or update a daily target for a salesman
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DailyTarget'
+      responses:
+        '201':
+          description: Created or updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyTarget'
+
+  /hr/targets/{targetId}:
+    parameters:
+      - name: targetId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      tags: [HRTarget]
+      operationId: deleteTarget
+      responses:
+        '204':
+          description: Deleted
+
+components:
+  schemas:
+
+    SalesmanProfile:
+      type: object
+      properties:
+        salesmanId:
+          type: string
+          readOnly: true
+        username:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+        routeId:
+          type: string
+        routeName:
+          type: string
+          readOnly: true
+        areaName:
+          type: string
+          readOnly: true
+        isActive:
+          type: boolean
+
+    SalesRoute:
+      type: object
+      properties:
+        routeId:
+          type: string
+        routeName:
+          type: string
+        areaName:
+          type: string
+        isActive:
+          type: boolean
+
+    DailyTarget:
+      type: object
+      properties:
+        targetId:
+          type: string
+          readOnly: true
+        salesmanId:
+          type: string
+        salesmanName:
+          type: string
+          readOnly: true
+        targetDate:
+          type: string
+          format: date
+        visitTarget:
+          type: integer
+        orderTarget:
+          type: integer
+        collectionTarget:
+          type: number
+          format: double

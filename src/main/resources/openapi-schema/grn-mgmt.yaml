@@ -1,0 +1,169 @@
+openapi: 3.0.3
+info:
+  title: GRN Management API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api
+
+tags:
+  - name: GRN
+
+paths:
+
+  /grn:
+    get:
+      tags: [GRN]
+      operationId: getAllGrns
+      summary: List all GRNs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GrnResponse'
+
+    post:
+      tags: [GRN]
+      operationId: createGrn
+      summary: >
+        Create a GRN — saves header, saves line items,
+        auto-creates INBOUND stock movements for each item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrnRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrnResponse'
+
+  /grn/{grnId}:
+    parameters:
+      - name: grnId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [GRN]
+      operationId: getGrnById
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrnResponse'
+        '404':
+          description: Not found
+
+components:
+  schemas:
+
+    GrnItemRequest:
+      type: object
+      required: [materialId, receivedQty]
+      properties:
+        materialId:
+          type: string
+        orderedQty:
+          type: number
+          format: double
+        receivedQty:
+          type: number
+          format: double
+        unitCost:
+          type: number
+          format: double
+        notes:
+          type: string
+
+    GrnRequest:
+      type: object
+      required: [supplierCode, receivedDate, items]
+      properties:
+        supplierCode:
+          type: string
+        poId:
+          type: string
+        receivedDate:
+          type: string
+          format: date
+        invoiceNumber:
+          type: string
+        notes:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrnItemRequest'
+
+    GrnItemResponse:
+      type: object
+      properties:
+        grnItemId:
+          type: string
+          readOnly: true
+        grnId:
+          type: string
+          readOnly: true
+        materialId:
+          type: string
+        materialName:
+          type: string
+          readOnly: true
+        orderedQty:
+          type: number
+          format: double
+        receivedQty:
+          type: number
+          format: double
+        unitCost:
+          type: number
+          format: double
+        notes:
+          type: string
+        movementId:
+          type: string
+          readOnly: true
+
+    GrnResponse:
+      type: object
+      properties:
+        grnId:
+          type: string
+          readOnly: true
+        poId:
+          type: string
+        supplierCode:
+          type: string
+        supplierName:
+          type: string
+          readOnly: true
+        receivedDate:
+          type: string
+          format: date
+        invoiceNumber:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, CONFIRMED, CANCELLED]
+        notes:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrnItemResponse'
+        totalValue:
+          type: number
+          format: double
+          readOnly: true

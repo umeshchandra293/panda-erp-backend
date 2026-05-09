@@ -1,0 +1,697 @@
+openapi: 3.0.3
+info:
+  title: Sales Management API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api
+
+tags:
+  - name: SalesRetailer
+  - name: SalesProduct
+  - name: SalesVisit
+  - name: SalesOrder
+  - name: SalesPayment
+  - name: SalesDashboard
+  - name: SalesSalesman
+
+paths:
+
+  /sales/retailers:
+    get:
+      tags: [SalesRetailer]
+      operationId: getAllRetailers
+      parameters:
+        - name: salesmanId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: area
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: isActive
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Retailer'
+    post:
+      tags: [SalesRetailer]
+      operationId: createRetailer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Retailer'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Retailer'
+
+  /sales/retailers/{retailerId}:
+    parameters:
+      - name: retailerId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [SalesRetailer]
+      operationId: getRetailerById
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Retailer'
+        '404':
+          description: Not found
+    put:
+      tags: [SalesRetailer]
+      operationId: updateRetailer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Retailer'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Retailer'
+
+  /sales/retailers/{retailerId}/ledger:
+    parameters:
+      - name: retailerId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [SalesRetailer]
+      operationId: getRetailerLedger
+      summary: Full order and payment history for a retailer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetailerLedger'
+
+  /sales/products:
+    get:
+      tags: [SalesProduct]
+      operationId: getAllProducts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesProduct'
+
+  /sales/products/for-retailer/{retailerId}:
+    parameters:
+      - name: retailerId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [SalesProduct]
+      operationId: getProductsForRetailer
+      summary: Products with retailer-specific pricing applied
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesProduct'
+
+  /sales/visits:
+    get:
+      tags: [SalesVisit]
+      operationId: getAllVisits
+      parameters:
+        - name: salesmanId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: retailerId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesVisit'
+    post:
+      tags: [SalesVisit]
+      operationId: createVisit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesVisit'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesVisit'
+
+  /sales/orders:
+    get:
+      tags: [SalesOrder]
+      operationId: getAllOrders
+      parameters:
+        - name: salesmanId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: retailerId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesOrder'
+    post:
+      tags: [SalesOrder]
+      operationId: createOrder
+      summary: Create order - auto-updates retailer balance, enforces credit limit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesOrder'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrder'
+        '422':
+          description: Credit limit exceeded
+
+  /sales/orders/{orderId}/status:
+    parameters:
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      tags: [SalesOrder]
+      operationId: updateOrderStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [PLACED, DISPATCHED, CANCELLED]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrder'
+
+  /sales/payments:
+    get:
+      tags: [SalesPayment]
+      operationId: getAllPayments
+      parameters:
+        - name: salesmanId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: retailerId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesPayment'
+    post:
+      tags: [SalesPayment]
+      operationId: createPayment
+      summary: Record payment - auto-reduces retailer balance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesPayment'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesPayment'
+
+  /sales/salesman/by-username/{username}:
+    parameters:
+      - name: username
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [SalesSalesman]
+      operationId: getSalesmanByUsername
+      summary: Resolve salesman_id from auth username on login
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Salesman'
+        '404':
+          description: Not found
+
+  /sales/salesman/{salesmanId}/today:
+    parameters:
+      - name: salesmanId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [SalesSalesman]
+      operationId: getSalesmanToday
+      summary: Today visits, orders, payments and target progress
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesmanDaySummary'
+
+  /sales/dashboard/activity:
+    get:
+      tags: [SalesDashboard]
+      operationId: getSalesActivity
+      summary: All salesmen activity for a given date
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesmanActivityRow'
+
+  /sales/dashboard/kpis:
+    get:
+      tags: [SalesDashboard]
+      operationId: getSalesKpis
+      summary: Top-line KPIs - total receivables, critical accounts, network size
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesKpis'
+
+components:
+  schemas:
+
+    Retailer:
+      type: object
+      properties:
+        retailerId:
+          type: string
+          readOnly: true
+        shopName:
+          type: string
+        ownerName:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        area:
+          type: string
+        gpsLat:
+          type: number
+          format: double
+        gpsLng:
+          type: number
+          format: double
+        assignedSalesmanId:
+          type: string
+        assignedSalesmanName:
+          type: string
+          readOnly: true
+        creditLimit:
+          type: number
+          format: double
+        currentBalance:
+          type: number
+          format: double
+        isActive:
+          type: boolean
+
+    RetailerLedger:
+      type: object
+      properties:
+        retailer:
+          $ref: '#/components/schemas/Retailer'
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesOrder'
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesPayment'
+
+    SalesProduct:
+      type: object
+      properties:
+        productId:
+          type: string
+          readOnly: true
+        productName:
+          type: string
+        sku:
+          type: string
+        basePrice:
+          type: number
+          format: double
+        effectivePrice:
+          type: number
+          format: double
+          readOnly: true
+        unit:
+          type: string
+        isActive:
+          type: boolean
+
+    SalesVisit:
+      type: object
+      properties:
+        visitId:
+          type: string
+          readOnly: true
+        salesmanId:
+          type: string
+        retailerId:
+          type: string
+        retailerName:
+          type: string
+          readOnly: true
+        visitDate:
+          type: string
+          format: date
+        checkInTime:
+          type: string
+          format: date-time
+        gpsLat:
+          type: number
+          format: double
+        gpsLng:
+          type: number
+          format: double
+        gpsVerified:
+          type: boolean
+        remarks:
+          type: string
+        status:
+          type: string
+          enum: [VISITED, NO_CONTACT, CLOSED]
+
+    SalesOrder:
+      type: object
+      properties:
+        orderId:
+          type: string
+          readOnly: true
+        salesmanId:
+          type: string
+        retailerId:
+          type: string
+        retailerName:
+          type: string
+          readOnly: true
+        visitId:
+          type: string
+        orderDate:
+          type: string
+          format: date
+        totalAmount:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [PLACED, DISPATCHED, CANCELLED]
+        notes:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesOrderItem'
+
+    SalesOrderItem:
+      type: object
+      properties:
+        itemId:
+          type: string
+          readOnly: true
+        productId:
+          type: string
+        productName:
+          type: string
+          readOnly: true
+        quantity:
+          type: number
+          format: double
+        unitPrice:
+          type: number
+          format: double
+        lineTotal:
+          type: number
+          format: double
+
+    SalesPayment:
+      type: object
+      properties:
+        paymentId:
+          type: string
+          readOnly: true
+        salesmanId:
+          type: string
+        retailerId:
+          type: string
+        retailerName:
+          type: string
+          readOnly: true
+        visitId:
+          type: string
+        paymentDate:
+          type: string
+          format: date
+        amount:
+          type: number
+          format: double
+        paymentMode:
+          type: string
+          enum: [CASH, UPI, CREDIT]
+        referenceNumber:
+          type: string
+        notes:
+          type: string
+
+    Salesman:
+      type: object
+      properties:
+        salesmanId:
+          type: string
+        username:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+        routeId:
+          type: string
+        routeName:
+          type: string
+          readOnly: true
+        areaName:
+          type: string
+          readOnly: true
+        isActive:
+          type: boolean
+
+    SalesmanDaySummary:
+      type: object
+      properties:
+        salesman:
+          $ref: '#/components/schemas/Salesman'
+        visitTarget:
+          type: integer
+        orderTarget:
+          type: integer
+        collectionTarget:
+          type: number
+          format: double
+        visitsToday:
+          type: integer
+        ordersToday:
+          type: integer
+        collectionsToday:
+          type: number
+          format: double
+        retailers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Retailer'
+
+    SalesmanActivityRow:
+      type: object
+      properties:
+        salesmanId:
+          type: string
+        salesmanName:
+          type: string
+        routeName:
+          type: string
+        visitTarget:
+          type: integer
+        visitsToday:
+          type: integer
+        ordersToday:
+          type: integer
+        collectionsToday:
+          type: number
+          format: double
+        conversionRate:
+          type: number
+          format: double
+
+    SalesKpis:
+      type: object
+      properties:
+        totalRetailers:
+          type: integer
+        activeRetailers:
+          type: integer
+        totalReceivables:
+          type: number
+          format: double
+        outstandingShops:
+          type: integer
+        criticalAccounts:
+          type: integer
+        todayCollections:
+          type: number
+          format: double
+        todayOrders:
+          type: integer

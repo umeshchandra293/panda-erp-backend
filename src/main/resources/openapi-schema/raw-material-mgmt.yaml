@@ -2,217 +2,153 @@ openapi: 3.0.3
 info:
   title: Raw Material Management API
   description: REST API for Raw Material Management System
-  version: 1.0.0
+  version: 2.0.0
   contact:
     name: HS Material Management Team
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8080/api
     description: Local development server
 
 tags:
-  - name: MaterialMgmt
-    description: Material management master data
+  - name: RawMaterial
+    description: Raw material master data
+
 paths:
   /rawmaterial:
     get:
       tags: [RawMaterial]
       operationId: getAllMaterials
       summary: List all raw materials
-      description: Retrieve paginated list of raw materials
       parameters:
         - name: category
           in: query
-          schema:
-            type: integer
-            format: int32
+          required: false
+          schema: { type: string }
         - name: isActive
           in: query
-          schema:
-            type: boolean
-        - name: page
-          in: query
-          schema:
-            type: integer
-            format: int32
-            default: 0
-        - name: size
-          in: query
-          schema:
-            type: integer
-            format: int32
-            default: 20
-        - name: sort
-          in: query
-          schema:
-            type: string
+          required: false
+          schema: { type: boolean }
       responses:
         '200':
-          description: Successfully retrieved materials
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RawMaterial'
+                type: array
+                items: { $ref: '#/components/schemas/RawMaterial' }
+        '500':
+          description: Internal Server Error
+
     post:
       tags: [RawMaterial]
       operationId: createMaterial
       summary: Create a new raw material
-      description: Create a new raw material record
+      description: materialId is server-generated and must NOT be included in the request body.
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/RawMaterial'
+            schema: { $ref: '#/components/schemas/RawMaterial' }
       responses:
         '201':
-          description: Material created successfully
+          description: Created
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/RawMaterial'
+              schema: { $ref: '#/components/schemas/RawMaterial' }
         '400':
           description: Invalid input
 
-  /rawmaterial/{id}:
+  /rawmaterial/{materialId}:
+    parameters:
+      - name: materialId
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 40
     get:
       tags: [RawMaterial]
       operationId: getMaterialById
       summary: Get raw material by ID
-      description: Retrieve a specific raw material by its ID
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
       responses:
         '200':
-          description: Material found
+          description: OK
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/RawMaterial'
+              schema: { $ref: '#/components/schemas/RawMaterial' }
         '404':
-          description: Material not found
+          description: Not found
     put:
       tags: [RawMaterial]
       operationId: updateMaterial
       summary: Update raw material
-      description: Update an existing raw material
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/RawMaterial'
+            schema: { $ref: '#/components/schemas/RawMaterial' }
       responses:
         '200':
-          description: Material updated successfully
+          description: OK
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/RawMaterial'
+              schema: { $ref: '#/components/schemas/RawMaterial' }
         '404':
-          description: Material not found
+          description: Not found
     delete:
       tags: [RawMaterial]
       operationId: deleteMaterial
       summary: Delete raw material
-      description: Delete a raw material by its ID
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
       responses:
         '204':
-          description: Material deleted successfully
+          description: No Content
         '404':
-          description: Material not found
+          description: Not found
 
 components:
   schemas:
     RawMaterial:
       type: object
       required:
-        - name
-        - categoryId
+        - materialName
+        - category
+        - uom
       properties:
-        name:
+        materialId:
           type: string
-          minLength: 1
-          maxLength: 100
+          readOnly: true
+          maxLength: 40
+          description: Server-generated. Format MAT-NNNNNN.
+          example: MAT-000001
+        materialName:
+          type: string
+          maxLength: 255
+          example: Potassium Bicarbonate (Food Grade)
         description:
           type: string
           maxLength: 500
-        categoryId:
-          type: integer
-          format: int32
-        unitOfMeasure:
+        category:
           type: string
-          enum: [KG, LITER, PIECE, METER]
-        minimumStockLevel:
+          enum: [CHEMICALS, PACKAGING, BRANDING, CAPS, LABELS, INGREDIENTS, EQUIPMENT, CONSUMABLES, OTHER]
+          example: CHEMICALS
+        uom:
+          type: string
+          enum: [KG, GM, LTR, ML, PCS, BOX, BAG, ROLL, METER]
+          example: KG
+        hsnSacCode:
+          type: string
+          pattern: '^[0-9]{4,8}$'
+          example: "28369990"
+        reorderLevel:
           type: number
-          format: float
+          format: double
           minimum: 0
-        maximumStockLevel:
+          default: 0
+        safetyStockLevel:
           type: number
-          format: float
+          format: double
           minimum: 0
-        reorderPoint:
-          type: number
-          format: float
-          minimum: 0
+          default: 0
         isActive:
           type: boolean
           default: true
-
-    PageRawMaterial:
-      type: object
-      properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/RawMaterial'
-        pageable:
-          type: object
-          properties:
-            pageNumber:
-              type: integer
-            pageSize:
-              type: integer
-            sort:
-              type: object
-            offset:
-              type: integer
-            paged:
-              type: boolean
-            unpaged:
-              type: boolean
-        totalElements:
-          type: integer
-          format: int64
-        totalPages:
-          type: integer
-        last:
-          type: boolean
-        first:
-          type: boolean
-        numberOfElements:
-          type: integer
-        size:
-          type: integer
-        sort:
-          type: object
-        empty:
-          type: boolean

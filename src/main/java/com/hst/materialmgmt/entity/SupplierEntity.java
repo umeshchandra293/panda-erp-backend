@@ -40,11 +40,29 @@ public class SupplierEntity extends BaseEntity {
   @Column("legal_entity_id")
   private String legalEntity;
 
+  @Column("contact_person_name")
+  private String contactPersonName;
+
   @Column("gst_number")
   private String gstNumber;
 
+  @Column("gst_registration_type")
+  private String gstRegistrationType;
+
   @Column("pan_number")
   private String panNumber;
+
+  @Column("state_code")
+  private String stateCode;
+
+  @Column("country_code")
+  private String countryCode;
+
+  @Column("lead_time_days")
+  private Integer leadTimeDays;
+
+  @Column("payment_term")
+  private String paymentTerm;
 
   @Column("effective_date")
   private LocalDate effectiveDate;
@@ -52,9 +70,10 @@ public class SupplierEntity extends BaseEntity {
   @Column("end_date")
   private LocalDate endDate;
 
-  @Column("payment_term")
-  private String paymentTerm;
+  @Column("is_active")
+  private Boolean isActive;
 
+  @Override
   public String getId() {
     return supplierCode;
   }

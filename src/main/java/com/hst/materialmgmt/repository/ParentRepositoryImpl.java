@@ -31,7 +31,7 @@ public abstract class ParentRepositoryImpl implements ParentRepository {
 
   @Autowired protected R2dbcEntityTemplate r2dbcEntityTemplate;
 
-  @Autowired DatabaseClient databaseClient;
+  @Autowired protected DatabaseClient databaseClient;
 
   protected abstract <T> Class<T> getEntityClass();
 

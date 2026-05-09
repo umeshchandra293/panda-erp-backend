@@ -1,0 +1,271 @@
+openapi: 3.0.3
+info:
+  title: Inventory Management API
+  description: Stock movements, GRN, and dashboard endpoints
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api
+    description: Local development server
+
+tags:
+  - name: StockMovement
+    description: Stock ledger entries
+  - name: GRN
+    description: Goods Receipt Notes
+  - name: InventoryDashboard
+    description: Aggregated KPIs and reports
+
+paths:
+  # ─── Stock Movements ────────────────────────────────────────────────
+
+  /stock-movements:
+    get:
+      tags: [StockMovement]
+      operationId: getAllMovements
+      summary: List stock movements
+      parameters:
+        - name: materialId
+          in: query
+          schema: { type: string }
+        - name: movementType
+          in: query
+          schema: { type: string }
+        - name: fromDate
+          in: query
+          schema: { type: string, format: date }
+        - name: toDate
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/StockMovement' }
+
+  /stock-movements/batch:
+    post:
+      tags: [StockMovement]
+      operationId: recordBatchMovements
+      summary: Record multiple movements (e.g. daily consumption batch sheet)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: '#/components/schemas/StockMovement' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/StockMovement' }
+
+  # ─── GRN ────────────────────────────────────────────────────────────
+
+  /grns:
+    get:
+      tags: [GRN]
+      operationId: getAllGrns
+      summary: List GRNs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Grn' }
+    post:
+      tags: [GRN]
+      operationId: createGrn
+      summary: Record a new GRN (auto-creates inbound stock movements)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Grn' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Grn' }
+
+  /grns/{grnId}:
+    parameters:
+      - name: grnId
+        in: path
+        required: true
+        schema: { type: string, maxLength: 40 }
+    get:
+      tags: [GRN]
+      operationId: getGrnById
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Grn' }
+        '404': { description: Not found }
+
+  # ─── Dashboard / Aggregates ─────────────────────────────────────────
+
+  /inventory/dashboard:
+    get:
+      tags: [InventoryDashboard]
+      operationId: getDashboardSummary
+      summary: KPI summary + per-material breakdown
+      parameters:
+        - name: fromDate
+          in: query
+          schema: { type: string, format: date }
+        - name: toDate
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DashboardSummary' }
+
+  /inventory/trend:
+    get:
+      tags: [InventoryDashboard]
+      operationId: getMovementTrend
+      summary: Daily totals for charting (received vs consumed vs wasted)
+      parameters:
+        - name: days
+          in: query
+          schema: { type: integer, default: 30 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TrendPoint' }
+
+  /inventory/wastage-breakdown:
+    get:
+      tags: [InventoryDashboard]
+      operationId: getWastageBreakdown
+      summary: Wastage grouped by reason code (for pie chart)
+      parameters:
+        - name: days
+          in: query
+          schema: { type: integer, default: 30 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/WastageReason' }
+
+# ────────────────────────────────────────────────────────────────────
+components:
+  schemas:
+
+    StockMovement:
+      type: object
+      required: [materialId, movementType, quantity]
+      properties:
+        movementId:    { type: string, readOnly: true }
+        materialId:    { type: string }
+        materialName:  { type: string, readOnly: true }
+        movementType:
+          type: string
+          enum: [INBOUND, CONSUMPTION, WASTAGE, ADJUSTMENT]
+        quantity:      { type: number, format: double }
+        unitCost:      { type: number, format: double }
+        movementDate:  { type: string, format: date }
+        referenceType:
+          type: string
+          enum: [PO, GRN, PRODUCTION, SCRAP, MANUAL, OPENING]
+        referenceId:   { type: string }
+        reasonCode:
+          type: string
+          enum: [SPOILAGE, DAMAGE, EXPIRY, DEFECT, SPILLAGE, CONTAMINATION, OTHER]
+        notes:         { type: string }
+
+    Grn:
+      type: object
+      required: [supplierCode, items]
+      properties:
+        grnId:           { type: string, readOnly: true }
+        poId:            { type: string }
+        supplierCode:    { type: string }
+        supplierName:    { type: string, readOnly: true }
+        receivedDate:    { type: string, format: date }
+        invoiceNumber:   { type: string }
+        status:
+          type: string
+          enum: [DRAFT, POSTED, CANCELLED]
+        notes:           { type: string }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/GrnItem' }
+
+    GrnItem:
+      type: object
+      required: [materialId, receivedQty]
+      properties:
+        grnItemId:    { type: string, readOnly: true }
+        materialId:   { type: string }
+        materialName: { type: string, readOnly: true }
+        orderedQty:   { type: number, format: double }
+        receivedQty:  { type: number, format: double }
+        unitCost:     { type: number, format: double }
+        notes:        { type: string }
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalInbound:     { type: number, format: double }
+        totalConsumed:    { type: number, format: double }
+        totalWastage:     { type: number, format: double }
+        totalStockValue:  { type: number, format: double }
+        materialBreakdown:
+          type: array
+          items: { $ref: '#/components/schemas/MaterialStockSummary' }
+
+    MaterialStockSummary:
+      type: object
+      properties:
+        materialId:        { type: string }
+        materialName:      { type: string }
+        category:          { type: string }
+        uom:               { type: string }
+        stockOnHand:       { type: number, format: double }
+        inboundPeriod:     { type: number, format: double }
+        consumedPeriod:    { type: number, format: double }
+        wastagePeriod:     { type: number, format: double }
+        reorderLevel:      { type: number, format: double }
+        safetyStockLevel:  { type: number, format: double }
+        belowReorder:      { type: boolean }
+        belowSafety:       { type: boolean }
+
+    TrendPoint:
+      type: object
+      properties:
+        date:       { type: string, format: date }
+        inbound:    { type: number, format: double }
+        consumed:   { type: number, format: double }
+        wastage:    { type: number, format: double }
+
+    WastageReason:
+      type: object
+      properties:
+        reasonCode:  { type: string }
+        totalQty:    { type: number, format: double }
+        eventCount:  { type: integer }
