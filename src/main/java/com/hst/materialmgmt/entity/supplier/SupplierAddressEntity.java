@@ -1,8 +1,10 @@
-package com.hst.materialmgmt.entity;
+package com.hst.materialmgmt.entity.supplier;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
+
+import com.hst.materialmgmt.entity.BaseEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

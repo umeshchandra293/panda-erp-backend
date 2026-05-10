@@ -22,44 +22,37 @@ public abstract class BaseController {
     /**
      * Handles the deletion logic.
      */
-    protected Mono<ResponseEntity<Void>> delete(
-            BaseService baseService, String key, ServerWebExchange exchange) {
-        
+    protected Mono<ResponseEntity<Void>> delete(BaseService baseService, String key, ServerWebExchange exchange) {
         if (key == null || key.isEmpty()) {
             return Mono.error(new IllegalArgumentException("Object key cannot be null or empty"));
         }
 
         return baseService.deleteFullHierarchy(key)
-                // Use .then() to ignore the service result and emit the 204 response
-                .then(Mono.fromCallable(() -> ResponseEntity.noContent().<Void>build()))
-                // Standardize the error response type
-                .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).<Void>build()));
+            // Use .then() to ignore the service result and emit the 204 response
+            .then(Mono.fromCallable(() -> ResponseEntity.noContent().<Void>build()))
+            // Standardize the error response type
+            .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).<Void>build()));
     }
-
-    // --- Other methods remain largely the same but ensure they return Object as expected ---
 
     protected Flux<Object> findAll(BaseService baseService, ServerWebExchange exchange) {
         return baseService.findAllFullHierarchy();
     }
 
-    protected Mono<Object> findByKey(
-            BaseService baseService, String key, ServerWebExchange exchange) {
+    protected Mono<Object> findByKey(BaseService baseService, String key, ServerWebExchange exchange) {
         if (key == null || key.isEmpty()) {
             return Mono.error(new IllegalArgumentException("Object key cannot be null or empty"));
         }
         return baseService.findByIdFullHierarchy(key);
     }
 
-    protected Mono<Object> create(
-            BaseService baseService, Mono<Object> monoObject, ServerWebExchange exchange) {
+    protected Mono<Object> create(BaseService baseService, Mono<Object> monoObject, ServerWebExchange exchange) {
         if (monoObject == null) {
             return Mono.error(new IllegalArgumentException("Object cannot be null"));
         }
         return baseService.createFullHierarchy(monoObject);
     }
 
-    protected Mono<Object> update(
-            BaseService baseService, String key, Mono<Object> monoObject, ServerWebExchange exchange) {
+    protected Mono<Object> update(BaseService baseService, String key, Mono<Object> monoObject, ServerWebExchange exchange) {
         if (key == null || key.isEmpty()) {
             return Mono.error(new IllegalArgumentException("Key cannot be null"));
         }

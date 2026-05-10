@@ -5,7 +5,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import com.hst.materialmgmt.entity.SupplierEntity;
+import com.hst.materialmgmt.entity.supplier.SupplierEntity;
 import com.hst.materialmgmt.rowMapper.SupplierRowMapper;
 
 @Repository

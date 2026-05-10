@@ -1,4 +1,4 @@
-package com.hst.materialmgmt.entity;
+package com.hst.materialmgmt.entity.supplier;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
+
+import com.hst.materialmgmt.entity.BaseEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

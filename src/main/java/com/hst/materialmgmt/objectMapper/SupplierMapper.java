@@ -4,8 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.hst.api.model.Supplier;
 import com.hst.materialmgmt.entity.BaseEntity;
-import com.hst.materialmgmt.entity.SupplierEntity;
-
+import com.hst.materialmgmt.entity.supplier.SupplierEntity;
 
 @Component
 public class SupplierMapper extends BaseMapper {

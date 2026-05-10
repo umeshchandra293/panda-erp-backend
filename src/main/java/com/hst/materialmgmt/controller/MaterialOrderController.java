@@ -10,7 +10,6 @@ import org.springframework.web.server.ServerWebExchange;
 import com.hst.api.MaterialOrdersApi;
 import com.hst.api.model.MaterialOrder;
 import com.hst.api.model.MaterialOrderPage;
-import com.hst.api.model.Supplier;
 import com.hst.materialmgmt.service.SupplierService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;

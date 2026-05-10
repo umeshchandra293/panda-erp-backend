@@ -7,8 +7,8 @@ import org.springframework.stereotype.Repository;
 
 import com.hst.materialmgmt.entity.BaseEntity;
 import com.hst.materialmgmt.entity.EmailEntity;
-import com.hst.materialmgmt.entity.SupplierEmailEntity;
-import com.hst.materialmgmt.entity.SupplierEntity;
+import com.hst.materialmgmt.entity.supplier.SupplierEmailEntity;
+import com.hst.materialmgmt.entity.supplier.SupplierEntity;
 import com.hst.materialmgmt.rowMapper.EmailRowMapper;
 
 import reactor.core.publisher.Mono;
