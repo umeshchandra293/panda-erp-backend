@@ -2,7 +2,7 @@ package com.hst.materialmgmt.rowMapper;
 
 import org.springframework.stereotype.Component;
 
-import com.hst.materialmgmt.entity.SupplierEntity;
+import com.hst.materialmgmt.entity.supplier.SupplierEntity;
 
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;

@@ -7,8 +7,8 @@ import org.springframework.stereotype.Repository;
 
 import com.hst.materialmgmt.entity.AddressEntity;
 import com.hst.materialmgmt.entity.BaseEntity;
-import com.hst.materialmgmt.entity.SupplierAddressEntity;
-import com.hst.materialmgmt.entity.SupplierEntity;
+import com.hst.materialmgmt.entity.supplier.SupplierAddressEntity;
+import com.hst.materialmgmt.entity.supplier.SupplierEntity;
 import com.hst.materialmgmt.rowMapper.AddressRowMapper;
 import com.hst.materialmgmt.rowMapper.BaseRowMapper;
 

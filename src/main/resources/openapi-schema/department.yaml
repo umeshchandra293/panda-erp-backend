@@ -1,0 +1,125 @@
+openapi: 3.0.0
+info:
+  title: Department Management API
+  version: 1.0.0
+  description: API for managing company departments and their hierarchies.
+
+paths:
+  /departments:
+    post:
+      summary: Create a new department
+      operationId: createDepartment
+      tags:
+        - Departments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+      responses:
+        '201':
+          description: Department created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+
+    get:
+      summary: List all departments
+      operationId: listDepartments
+      tags:
+        - Departments
+      responses:
+        '200':
+          description: A list of departments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Department'
+
+  /departments/{department_id}:
+    parameters:
+      - name: department_id
+        in: path
+        required: true
+        description: The unique ID of the department
+        schema:
+          type: string
+
+    get:
+      summary: Get department details
+      operationId: getDepartmentById
+      tags:
+        - Departments
+      responses:
+        '200':
+          description: Department details found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+        '404':
+          description: Department not found
+
+    put:
+      summary: Update a department
+      operationId: updateDepartment
+      tags:
+        - Departments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+      responses:
+        '200':
+          description: Department updated successfully
+        '404':
+          description: Department not found
+
+    delete:
+      summary: Delete a department
+      operationId: deleteDepartment
+      tags:
+        - Departments
+      responses:
+        '204':
+          description: Department deleted successfully
+        '404':
+          description: Department not found
+
+components:
+  schemas:
+    Department:
+      type: object
+      required:
+        - department_id
+        - company_id
+        - name
+        - code
+      properties:
+        department_id:
+          type: string
+          description: Unique identifier for the department.
+          example: "010"
+        company_id:
+          type: string
+          description: The ID of the company this department belongs to.
+          example: "001"
+        name:
+          type: string
+          description: Human-readable name of the department.
+          example: "Sales Department"
+        code:
+          type: string
+          description: Short code representing the department.
+          example: "SAl01"
+        parent_dept_id:
+          type: string
+          nullable: true
+          description: The ID of the parent department (for sub-departments).
+          example: "011"

@@ -38,46 +38,41 @@ public class SupplierController extends BaseController implements SupplierApi {
 	  }
 	  
 	  /**
-	   * Retrieves an organization by its unique key.
+	   * Retrieves an supplier by its unique key.
 	   *
-	   * @param orgKey The unique key of the organization to retrieve.
+	   * @param supplierKey The unique key of the supplier to retrieve.
 	   * @param exchange The server web exchange.
-	   * @return A Mono that emits the organization wrapped in a ResponseEntity.
+	   * @return A Mono that emits the supplier wrapped in a ResponseEntity.
 	   */
 	  @Override
 	  public Mono<ResponseEntity<Supplier>> getSupplierById(String supplierKey, ServerWebExchange exchange) {
 	    return findByKey(supplierService, supplierKey, exchange)
-	        .cast(Supplier.class) // Casts the Mono<Object> to Mono<Organization>
+	        .cast(Supplier.class) // Casts the Mono<Object> to Mono<Supplier>
 	        .map(ResponseEntity::ok)
 	        .defaultIfEmpty(ResponseEntity.notFound().build());
 	  }
 
 	  /**
-	   * Creates a new organization.
+	   * Creates a new supplier.
 	   *
-	   * @param organization The organization to create.
+	   * @param supplier The supplier to create.
 	   * @param exchange The server web exchange.
-	   * @return A Mono that emits the created organization wrapped in a ResponseEntity.
+	   * @return A Mono that emits the created supplier wrapped in a ResponseEntity.
 	   */
 	  @Override
-	  public Mono<ResponseEntity<Supplier>> createSupplier(
-	      Mono<Supplier> supplier, ServerWebExchange exchange) {
+	  public Mono<ResponseEntity<Supplier>> createSupplier(Mono<Supplier> supplier, ServerWebExchange exchange) {
 	    return create(supplierService, supplier.cast(Object.class), exchange)
-	        .cast(Supplier.class) // Casts the Mono<Object> to Mono<Organization>
-	        .map(
-	            newOrg ->
-	                ResponseEntity.status(HttpStatus.CREATED)
-	                    .body(newOrg)); // 201 Created for new resource
+	        .cast(Supplier.class) // Casts the Mono<Object> to Mono<Supplier>
+	        .map(newSupplier ->ResponseEntity.status(HttpStatus.CREATED)
+	        .body(newSupplier)); // 201 Created for new resource
 	  }
 
 	  @Override
 	  public Mono<ResponseEntity<Supplier>> updateSupplier(String supplierKey, Mono<Supplier> supplier, ServerWebExchange exchange) {
 	    return update(supplierService, supplierKey, supplier.cast(Object.class), exchange)
-	        .cast(Supplier.class) // Casts the Mono<Object> to Mono<Organization>
-	        .map(ResponseEntity::ok) // 200 OK with the updated organization
-	        .defaultIfEmpty(
-	            ResponseEntity.notFound()
-	                .build()); // 404 Not Found if the organization to update doesn't exist
+	        .cast(Supplier.class) // Casts the Mono<Object> to Mono<Supplier>
+	        .map(ResponseEntity::ok) // 200 OK with the updated supplier
+	        .defaultIfEmpty(ResponseEntity.notFound()
+	        .build()); // 404 Not Found if the supplier to update doesn't exist
 	  }
-
 }

@@ -1,8 +1,8 @@
 package com.hst.materialmgmt.repository;
 
-import com.hst.materialmgmt.entity.SupplierAddressEntity;
-import com.hst.materialmgmt.entity.SupplierEmailEntity;
-import com.hst.materialmgmt.entity.SupplierPhoneEntity;
+import com.hst.materialmgmt.entity.supplier.SupplierAddressEntity;
+import com.hst.materialmgmt.entity.supplier.SupplierEmailEntity;
+import com.hst.materialmgmt.entity.supplier.SupplierPhoneEntity;
 
 public class RepositoryConstants {
 	

@@ -258,7 +258,8 @@ public abstract class BaseServiceImpl implements BaseService {
         .as(transactionalOperator::transactional);
   }
 
-  private Mono<Long> deleteChildrenRecursively(BaseEntity parentEntity) {
+  @SuppressWarnings("null")
+private Mono<Long> deleteChildrenRecursively(BaseEntity parentEntity) {
     // 1. Handle the base case: No entity or no configured children
     if (parentEntity == null) {
       return Mono.just(0L);
@@ -353,7 +354,8 @@ public abstract class BaseServiceImpl implements BaseService {
    * Recursively delete all children of the given parentEntity. Does NOT delete the parent itself.
    * Returns the total number of child rows deleted.
    */
-  private Mono<Long> deleteHierarchy(BaseEntity parentEntity) {
+  @SuppressWarnings("null")
+private Mono<Long> deleteHierarchy(BaseEntity parentEntity) {
     if (parentEntity == null) {
       return Mono.just(0L);
     }

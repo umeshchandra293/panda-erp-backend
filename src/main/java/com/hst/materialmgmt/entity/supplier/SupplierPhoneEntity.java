@@ -1,8 +1,10 @@
-package com.hst.materialmgmt.entity;
+package com.hst.materialmgmt.entity.supplier;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
+
+import com.hst.materialmgmt.entity.BaseEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,10 +21,10 @@ import lombok.experimental.SuperBuilder;
 @Accessors(chain = true)
 @ToString
 @SuperBuilder
-@Table(value = "rm_supplier_email_link", schema = "rm_material_schema")
-public class SupplierEmailEntity extends BaseEntity {
-	  
-	@Id 
+@Table(value = "rm_supplier_phone_link", schema = "rm_material_schema")
+public class SupplierPhoneEntity extends BaseEntity {
+	
+	@Id
 	@Column("parent_id")
 	private String parentId;
 
@@ -30,6 +32,6 @@ public class SupplierEmailEntity extends BaseEntity {
 	private String childId;
 
 	public String getId() {
-	   return parentId + "-" + childId;
+		return parentId + "-" + childId;
 	}
 }

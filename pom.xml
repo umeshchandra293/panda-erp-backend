@@ -148,6 +148,13 @@
 				</configuration>
 				<executions>
 					<execution>
+						<id>company-mgmt</id>
+						<goals><goal>generate</goal></goals>
+						<configuration>
+							<inputSpec>${openapi.schema.dir}/company-mgmt.yaml</inputSpec>
+						</configuration>
+					</execution>
+					<execution>
 						<id>raw-material</id>
 						<goals><goal>generate</goal></goals>
 						<configuration>
@@ -168,7 +175,6 @@
 							<inputSpec>${openapi.schema.dir}/material-order-mgmt.yaml</inputSpec>
 						</configuration>
 					</execution>
-
 				</executions>
 			</plugin>
 			<plugin>
