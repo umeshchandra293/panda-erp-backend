@@ -1,4 +1,4 @@
-package com.hst.materialmgmt.controller;
+package com.hst.materialmgmt.controller.company;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,7 +9,8 @@ import org.springframework.web.server.ServerWebExchange;
 
 import com.hst.api.EmployeesApi;
 import com.hst.api.model.Employee;
-import com.hst.materialmgmt.service.EmployeeService;
+import com.hst.materialmgmt.controller.BaseController;
+import com.hst.materialmgmt.service.company.EmployeeService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import reactor.core.publisher.Mono;

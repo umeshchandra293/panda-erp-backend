@@ -34,13 +34,13 @@ public class AddressRepository extends ParentRepositoryImpl {
   }
 
   @SuppressWarnings("unchecked")
-@Override
+  @Override
   protected Class<AddressEntity> getEntityClass() {
     return AddressEntity.class;
   }
 
   @SuppressWarnings("unchecked")
-@Override
+  @Override
   protected BaseRowMapper<AddressEntity> getRowMapper() {
     return addressRowMapper;
   }
