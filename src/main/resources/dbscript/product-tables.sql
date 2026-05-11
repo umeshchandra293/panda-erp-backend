@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS "rm_material_schema".product_tbl (
 	sku                 VARCHAR(40) NOT NULL,
 	name                VARCHAR(255) NOT NULL,
 	category_id         VARCHAR(40) NOT NULL,
-	base_cost           DECIMAL(19,4) NOT NULL,
 	uom                 VARCHAR(20) DEFAULT 'Units',
 	is_active           BOOLEAN DEFAULT TRUE,
     created_at     		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -25,8 +24,8 @@ CREATE TABLE IF NOT EXISTS "rm_material_schema".product_tbl (
     FOREIGN KEY (category_id) REFERENCES "rm_material_schema".product_categories_tbl(category_id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS "rm_material_schema".product_base_price_tbl (
-	base_price_id       VARCHAR(40) NOT NULL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS "rm_material_schema".product_price_tbl (
+	product_price_id       VARCHAR(40) NOT NULL PRIMARY KEY,
 	product_id          VARCHAR(40) NOT NULL,
 	base_unit_price     DECIMAL(19,4) NOT NULL,
 	currency_code 		CHAR(3) DEFAULT 'RS',

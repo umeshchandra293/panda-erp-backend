@@ -29,7 +29,7 @@ public class MaterialOrderMapper extends BaseMapper {
 		updateEntity.setExptdDeliDate(materialOrder.getExptdDeliDate());
 		updateEntity.setActualDeliDate(materialOrder.getActualDeliDate());
 		updateEntity.setStatus(materialOrder.getStatus());
-		updateEntity.setTotalAmount(materialOrder.getTotalAmount());
+		updateEntity.setTotalAmount(materialOrder.getTotalAmount().doubleValue());
 		updateEntity.setOrdCreatedBy(materialOrder.getOrdCreatedBy());
 		updateEntity.setApprovedBy(materialOrder.getApprovedBy());
 		updateEntity.setNotes(materialOrder.getNotes());
