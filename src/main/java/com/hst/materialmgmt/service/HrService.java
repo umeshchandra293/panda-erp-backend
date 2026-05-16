@@ -7,9 +7,9 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.hs.api.model.DailyTarget;
-import com.hs.api.model.SalesmanProfile;
-import com.hs.api.model.SalesRoute;
+import com.hst.api.model.DailyTarget;
+import com.hst.api.model.SalesmanProfile;
+import com.hst.api.model.SalesRoute;
 import com.hst.materialmgmt.entity.DailyTargetEntity;
 import com.hst.materialmgmt.entity.SalesRouteEntity;
 import com.hst.materialmgmt.entity.SalesmanEntity;

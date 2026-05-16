@@ -4,9 +4,9 @@ import java.time.LocalDate;
 
 import org.springframework.stereotype.Component;
 
-import com.hs.api.model.Supplier;
+import com.hst.api.model.Supplier;
 import com.hst.materialmgmt.entity.BaseEntity;
-import com.hst.materialmgmt.entity.SupplierEntity;
+import com.hst.materialmgmt.entity.supplier.SupplierEntity;
 
 @Component
 public class SupplierMapper extends BaseMapper {
@@ -19,14 +19,10 @@ public class SupplierMapper extends BaseMapper {
     public BaseEntity toEntity(Object model, Object entity, boolean isNew) {
         Supplier vendor = (Supplier) model;
 
-        // Always start from the existing entity if available so the row's PK
-        // and audit fields survive a PUT where the request body omits supplierCode.
         SupplierEntity updateEntity = (entity != null)
                 ? (SupplierEntity) entity
                 : new SupplierEntity();
 
-        // PK: prefer the model's value, but fall back to whatever the entity
-        // already has (existing row on update, freshly-generated code on create).
         String code = (vendor.getSupplierCode() != null && !vendor.getSupplierCode().isBlank())
                 ? vendor.getSupplierCode()
                 : updateEntity.getSupplierCode();
@@ -52,14 +48,12 @@ public class SupplierMapper extends BaseMapper {
         updateEntity.setPaymentTerm(
                 vendor.getPaymentTerm() != null ? vendor.getPaymentTerm().name() : null);
 
-        // effectiveDate defaults to today on create per the OpenAPI contract
         LocalDate effective = vendor.getEffectiveDate();
         if (effective == null && isNew) {
             effective = LocalDate.now();
         }
         updateEntity.setEffectiveDate(effective);
         updateEntity.setEndDate(vendor.getEndDate());
-
         updateEntity.setIsActive(vendor.getIsActive() != null ? vendor.getIsActive() : Boolean.TRUE);
 
         updateEntity.setAddressEntities(AddressMapper.toEntities(vendor.getAddresses()));

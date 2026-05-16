@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.hs.api.PurchaseOrderApi;
-import com.hs.api.model.PurchaseOrderSummary;
-import com.hs.api.model.PurchaseOrderRequest;
+import com.hst.api.PurchaseOrderApi;
+import com.hst.api.model.PurchaseOrderSummary;
+import com.hst.api.model.PurchaseOrderRequest;
 import com.hst.materialmgmt.service.PurchaseOrderService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;

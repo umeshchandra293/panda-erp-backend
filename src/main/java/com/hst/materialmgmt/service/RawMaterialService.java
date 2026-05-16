@@ -8,11 +8,11 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.hs.api.model.GrnItemRequest;
-import com.hs.api.model.GrnItemResponse;
-import com.hs.api.model.GrnRequest;
-import com.hs.api.model.GrnResponse;
-import com.hs.api.model.RawMaterial;
+import com.hst.api.model.GrnItemRequest;
+import com.hst.api.model.GrnItemResponse;
+import com.hst.api.model.GrnRequest;
+import com.hst.api.model.GrnResponse;
+import com.hst.api.model.RawMaterial;
 import com.hst.materialmgmt.entity.GrnEntity;
 import com.hst.materialmgmt.entity.GrnItemEntity;
 import com.hst.materialmgmt.entity.StockMovementEntity;

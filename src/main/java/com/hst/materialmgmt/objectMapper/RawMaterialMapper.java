@@ -5,7 +5,7 @@ import java.time.LocalDate;
 
 import org.springframework.stereotype.Component;
 
-import com.hs.api.model.RawMaterial;
+import com.hst.api.model.RawMaterial;
 import com.hst.materialmgmt.entity.BaseEntity;
 import com.hst.materialmgmt.entity.RawMaterialEntity;
 

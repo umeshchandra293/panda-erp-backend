@@ -1,8 +1,10 @@
-package com.hst.materialmgmt.entity;
+package com.hst.materialmgmt.entity.product;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
+
+import com.hst.materialmgmt.entity.BaseEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,17 +21,30 @@ import lombok.experimental.SuperBuilder;
 @Accessors(chain = true)
 @ToString
 @SuperBuilder
-@Table(value = "rm_supplier_phone_link", schema = "erp_finance_schema")
-public class SupplierPhoneEntity extends BaseEntity {
+@Table(value = "product_tbl", schema = "rm_material_schema")
+public class ProductEntity extends BaseEntity {
 	
-	@Id
-	@Column("parent_id")
-	private String parentId;
+	@Id 
+	@Column("product_id")
+	private String productId;
+    
+    @Column("sku")	
+	private String sku;
 
-	@Column("child_id")
-	private String childId;
+    @Column("name")
+    private String name;
 
+    @Column("category_id")
+    private String categoryId;
+
+    @Column("uom")
+    private String uom;
+
+    @Column("is_active")
+    private Boolean isActive;
+
+	@Override
 	public String getId() {
-		return parentId + "-" + childId;
+		return productId;
 	}
 }

@@ -1,8 +1,4 @@
-DROP TABLE IF EXISTS "erp_finance_schema".rm_address_tbl;
-DROP TABLE IF EXISTS "erp_finance_schema".rm_phone_tbl;
-DROP TABLE IF EXISTS "erp_finance_schema".rm_email_tbl;
-
-CREATE TABLE IF NOT EXISTS "erp_finance_schema".rm_address_tbl (
+CREATE TABLE IF NOT EXISTS "rm_material_schema".rm_address_tbl (
     address_id       VARCHAR(40) NOT NULL PRIMARY KEY,
     address_line_1   VARCHAR(100) NOT NULL,
     address_line_2   VARCHAR(100),
@@ -19,7 +15,7 @@ CREATE TABLE IF NOT EXISTS "erp_finance_schema".rm_address_tbl (
     updated_by       VARCHAR(40) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS "erp_finance_schema".rm_phone_tbl (
+CREATE TABLE IF NOT EXISTS "rm_material_schema".rm_phone_tbl (
     phone_id         VARCHAR(40) NOT NULL PRIMARY KEY,
     phone_type       VARCHAR(10) NOT NULL,
     phone_number     VARCHAR(20) NOT NULL,
@@ -32,7 +28,7 @@ CREATE TABLE IF NOT EXISTS "erp_finance_schema".rm_phone_tbl (
     UNIQUE(phone_number)
 );
 
-CREATE TABLE IF NOT EXISTS "erp_finance_schema".rm_email_tbl (
+CREATE TABLE IF NOT EXISTS "rm_material_schema".rm_email_tbl (
     email_id         VARCHAR(40) NOT NULL PRIMARY KEY,
     email            VARCHAR(255) NOT NULL UNIQUE,
     is_primary       BOOLEAN DEFAULT FALSE,

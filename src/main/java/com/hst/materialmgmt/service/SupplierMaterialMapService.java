@@ -3,7 +3,7 @@ package com.hst.materialmgmt.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.hs.api.model.SupplierMaterialMapping;
+import com.hst.api.model.SupplierMaterialMapping;
 import com.hst.materialmgmt.entity.SupplierMaterialMapEntity;
 import com.hst.materialmgmt.objectMapper.BaseMapper;
 import com.hst.materialmgmt.objectMapper.SupplierMaterialMapMapper;

@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.hs.api.StockMovementApi;
-import com.hs.api.model.StockMovement;
+import com.hst.api.StockMovementApi;
+import com.hst.api.model.StockMovement;
 import com.hst.materialmgmt.service.StockMovementService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;

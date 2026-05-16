@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.hs.api.SupplierMaterialApi;
-import com.hs.api.model.SupplierMaterialMapping;
+import com.hst.api.SupplierMaterialApi;
+import com.hst.api.model.SupplierMaterialMapping;
 import com.hst.materialmgmt.service.SupplierMaterialMapService;
 import com.hst.materialmgmt.service.SupplierMaterialMapService.DuplicateMappingException;
 

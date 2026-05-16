@@ -2,8 +2,8 @@ package com.hst.materialmgmt.objectMapper;
 
 import org.springframework.stereotype.Component;
 
-import com.hs.api.model.PurchaseOrderSummary;
-import com.hs.api.model.PurchaseOrderRequest;
+import com.hst.api.model.PurchaseOrderSummary;
+import com.hst.api.model.PurchaseOrderRequest;
 import com.hst.materialmgmt.entity.BaseEntity;
 import com.hst.materialmgmt.entity.PurchaseOrderEntity;
 

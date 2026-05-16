@@ -1,0 +1,403 @@
+openapi: 3.0.3
+info:
+  title: Distribution Network Management API
+  version: 1.2.0
+  description: |
+    Consolidated API for managing manufacturing costs, hierarchical categories, 
+    territory-specific pricing, and promotional discounts.
+tags:
+  - name: Products
+  - name: Categories
+  - name: Product Pricing
+  - name: Marketing & Promotions
+
+paths:
+  # 1. PRODUCT ENDPOINTS
+  /products:
+    get:
+      operationId: getAllProducts
+      summary: List all products
+      tags: [Products]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Product'
+    post:
+      operationId: createProduct
+      summary: Create product
+      tags: [Products]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '201':
+          description: Created
+  /products/{product_id}:
+    parameters:
+      - name: product_id
+        in: path
+        required: true
+        description: The ID of the product to act upon
+        schema:
+          type: integer
+    get:
+      operationId: getProductById
+      summary: Get product by ID
+      tags: [Products]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Not Found
+    put:
+      operationId: updateProduct
+      summary: Update product by ID
+      tags: [Products]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '200':
+          description: Updated
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+    delete:
+      operationId: deleteProduct
+      summary: Delete product by ID
+      tags: [Products]
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+
+  # 2. CATEGORY ENDPOINTS
+  /product-categories:
+    get:
+      operationId: getAllCategories
+      summary: List categories
+      tags: [Product Categories]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/ProductCategory'
+    post:
+      operationId: createCategory
+      summary: Create category
+      tags: [Categories]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCategory'
+      responses:
+        '201':
+          description: Created
+
+  /product-categories/{category_id}:
+    parameters:
+      - name: category_id
+        in: path
+        required: true
+        description: The ID of the category to act upon
+        schema:
+          type: integer
+    get:
+      operationId: getCategoryById
+      summary: Get category by ID
+      tags: [Product Categories]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductCategory'
+        '404':
+          description: Not Found
+    put:
+      operationId: updateCategory
+      summary: Update category by ID
+      tags: [Product Categories]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCategory'
+      responses:
+        '200':
+          description: Updated
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductCategory'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductCategory'
+    delete:
+      operationId: deleteCategory
+      summary: Delete category by ID
+      tags: [Product Categories]
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductCategory'
+
+  # 3. Product Price ENDPOINTS
+  /product-prices:
+    get:
+      operationId: getAllProductPrices
+      summary: List internal base costs
+      tags: [Product Price]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/ProductPrice'
+    post:
+      operationId: createProductPrice
+      summary: Set internal base cost
+      tags: [Product Price]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductPrice'
+      responses:
+        '201':
+          description: Created
+
+  /product-prices/{product_price_id}:
+      parameters:
+        - name: product_price_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      get:
+        operationId: getProductPriceById
+        summary: Get internal base cost by ID
+        tags: [Product Price]
+        responses:
+          '200':
+            description: Success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductPrice'
+          '404':
+            description: Not Found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductPrice'
+      put:
+        operationId: updateProductPrice
+        summary: Update internal base cost by ID
+        tags: [Product Price]
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPrice'
+        responses:
+          '200':
+            description: Updated
+          '404':
+            description: Not Found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductPrice'
+          '400':
+            description: Bad Request
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductPrice'
+      delete:
+        operationId: deleteProductPrice
+        summary: Delete internal base cost by ID
+        tags: [Product Price]
+        responses:
+          '204':
+            description: Deleted
+          '404':
+            description: Not Found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductPrice'
+
+  # 4. DISCOUNT ENDPOINTS
+  /product-discounts:
+    get:
+      operationId: getAllProductDiscounts
+      summary: List active discounts
+      tags: [Marketing & Promotions]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/ProductDiscount'
+    post:
+      operationId: createProductDiscount
+      summary: Create discount rule
+      tags: [Marketing & Promotions]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductDiscount'
+      responses:
+        '201':
+          description: Created
+  /product-discounts/{discount_id}:
+      parameters:
+        - name: discount_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      get:
+        operationId: getProductDiscountById
+        summary: Get discount rule by ID
+        tags: [Marketing & Promotions]
+        responses:
+          '200':
+            description: Success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductDiscount'
+          '404':
+            description: Not Found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductDiscount'
+      put:
+        operationId: updateProductDiscount
+        summary: Update discount rule by ID
+        tags: [Marketing & Promotions]
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDiscount'
+        responses:
+          '200':
+            description: Updated
+          '404':
+            description: Not Found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductDiscount'
+          '400':
+            description: Bad Request
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductDiscount'
+      delete:
+        operationId: deleteProductDiscount
+        summary: Delete discount rule by ID
+        tags: [Marketing & Promotions]
+        responses:
+          '204':
+            description: Deleted
+          '404':
+            description: Not Found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProductDiscount'
+  
+components:
+  schemas:
+    Product:
+      type: object
+      required: [sku, name, category_id]
+      properties:
+        product_id: { type: string, example: 2001, readOnly: true }
+        sku: { type: string, example: "TSHIRT-RED-M" }
+        name: { type: string, example: "T-Shirt Red - Medium" }
+        category_id: { type: string, example: 1001 }
+        uom: { type: string, example: "EA" }
+        is_active: { type: boolean, default: true }
+
+    ProductCategory:
+      type: object
+      required: [name]
+      properties:
+        category_id: { type: string, example: 1001, readOnly: true }
+        parent_id: { type: string, nullable: true, example: null }
+        name: { type: string, example: "Finished Goods" }
+        description: { type: string, example: "Products ready for sale." }
+
+    ProductPrice:
+      type: object
+      required: [product_id, base_unit_price, currency_code, effective_date]
+      properties:
+        product_price_id: { type: string, example: 3001, readOnly: true }
+        product_id: { type: string, example: 2001 }
+        base_unit_price: { type: number, format: double, example: 6.75 }
+        currency_code: { type: string, example: "USD" }
+        effective_date: { type: string, format: date, example: "2026-05-10" }
+        end_date: { type: string, format: date, nullable: true }
+
+    ProductDiscount:
+      type: object
+      required: [product_id, name, discount_type, value, effective_date]
+      properties:
+        discount_id: { type: string, example: 4001, readOnly: true }
+        product_id: { type: string, example: 2001 }
+        name: { type: string, example: "Summer Promo 10% Off" }
+        discount_type: { type: string, example: festival }
+        value: { type: number, example: 10.0 }
+        min_quantity: { type: integer, example: 2 }
+        effective_date: { type: string, format: date, example: "2026-05-10" }
+        end_date: { type: string, format: date, nullable: true }

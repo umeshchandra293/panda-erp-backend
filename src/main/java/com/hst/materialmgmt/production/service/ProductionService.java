@@ -8,10 +8,10 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.hs.api.model.ProductionBatch;
-import com.hs.api.model.ProductionShift;
-import com.hs.api.model.ProductionShiftRequest;
-import com.hs.api.model.FgStockItem;
+import com.hst.api.model.ProductionBatch;
+import com.hst.api.model.ProductionShift;
+import com.hst.api.model.ProductionShiftRequest;
+import com.hst.api.model.FgStockItem;
 import com.hst.materialmgmt.production.dto.FgDispatchRequest;
 import com.hst.materialmgmt.production.dto.FgMovement;      
 import com.hst.materialmgmt.production.entity.*;
@@ -110,7 +110,7 @@ public class ProductionService {
                     .flatMap(savedShift ->
                             Flux.fromIterable(req.getBatches() != null
                                     ? req.getBatches()
-                                    : List.<com.hs.api.model.BatchEntry>of())
+                                    : List.<com.hst.api.model.BatchEntry>of())
                                     .concatMap(entry -> processBatch(shiftId,
                                             shift.getShiftDate(), entry))
                                     .collectList()
@@ -121,7 +121,7 @@ public class ProductionService {
 
     private Mono<ProductionBatch> processBatch(
             String shiftId, LocalDate shiftDate,
-            com.hs.api.model.BatchEntry entry) {
+            com.hst.api.model.BatchEntry entry) {
 
         return batchRepo.nextBatchId().flatMap(batchId -> {
 

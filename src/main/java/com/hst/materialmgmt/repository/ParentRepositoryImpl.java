@@ -27,7 +27,7 @@ import reactor.core.publisher.Mono;
 
 public abstract class ParentRepositoryImpl implements ParentRepository {
 
-  public static final String SCHEMA_NAME = "erp_finance_schema.";
+  public static final String SCHEMA_NAME = "rm_material_schema.";
 
   @Autowired protected R2dbcEntityTemplate r2dbcEntityTemplate;
 

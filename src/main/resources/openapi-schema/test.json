@@ -1,0 +1,55 @@
+{
+    "employee_id":"0111",
+    "company_id":"001",
+    "department_id":"010", 
+    "employee_code": "emp01",
+    "first_name":"David",
+    "last_name":"Warner",
+    "email":"davidw@gmail.com",
+    "phone":"1234567890",
+    "job_title":"Manager",
+    "manager_id":"01112",
+    "hire_date":"01-01-2020",
+    "termination_date":"12-31-9999",
+    "status":"Active"
+}
+
+
+{
+  "product_id": 2001,
+  "sku": "TSHIRT-RED-M",
+  "name": "T-Shirt Red - Medium",
+  "category_id": 1001,
+  "base_cost": 6.75,
+  "uom": "EA",
+  "is_active": true
+}
+
+
+{
+  "category_id": 1001,
+  "parent_id": null,
+  "name": "Finished Goods",
+  "description": "Products ready for sale to customers."
+}
+
+
+{
+  "base_price_id": 3001,
+  "product_id": 2001,
+  "base_unit_price": 14.99,
+  "currency_code": "USD",
+  "effective_date": "2026-05-10",
+  "end_date": null
+}
+
+{
+  "discount_id": 4001,
+  "product_id": 2001,
+  "name": "Summer Promo 10% Off",
+  "discount_type": "percent",
+  "value": 10.0,
+  "min_quantity": 2,
+  "effective_date": "2026-05-10",
+  "end_date": "2026-06-30"
+}   

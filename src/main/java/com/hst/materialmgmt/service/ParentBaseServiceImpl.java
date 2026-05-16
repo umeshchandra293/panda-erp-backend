@@ -75,7 +75,7 @@ public abstract class ParentBaseServiceImpl implements BaseService {
                     }))
         .as(transactionalOperator::transactional);
   }
-
+  
   public Mono<Long> deleteFullHierarchy(String parentId) {
     if (parentId == null || parentId.isEmpty()) {
       return Mono.error(new IllegalArgumentException("Item key cannot be null or empty"));

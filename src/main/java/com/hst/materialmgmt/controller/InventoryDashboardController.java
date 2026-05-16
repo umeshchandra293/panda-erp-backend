@@ -7,10 +7,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.hs.api.InventoryDashboardApi;
-import com.hs.api.model.DashboardSummary;
-import com.hs.api.model.TrendPoint;
-import com.hs.api.model.WastageReason;
+import com.hst.api.InventoryDashboardApi;
+import com.hst.api.model.DashboardSummary;
+import com.hst.api.model.TrendPoint;
+import com.hst.api.model.WastageReason;
 import com.hst.materialmgmt.service.StockMovementService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;

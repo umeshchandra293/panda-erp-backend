@@ -18,7 +18,7 @@ import lombok.experimental.SuperBuilder;
 @Accessors(chain = true)
 @ToString
 @SuperBuilder
-@Table(value = "PARENT_CHILD_LINK_TBL", schema = "erp_finance_schema")
+@Table(value = "PARENT_CHILD_LINK_TBL", schema = "rm_material_schema")
 public class ParentChildLinkEntity extends BaseEntity {
 
   @Column("parent_id")

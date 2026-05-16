@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.hs.api.HrSalesmanApi;
-import com.hs.api.HrTargetApi;
-import com.hs.api.model.DailyTarget;
-import com.hs.api.model.SalesmanProfile;
-import com.hs.api.model.SalesRoute;
+import com.hst.api.HrSalesmanApi;
+import com.hst.api.HrTargetApi;
+import com.hst.api.model.DailyTarget;
+import com.hst.api.model.SalesmanProfile;
+import com.hst.api.model.SalesRoute;
 import com.hst.materialmgmt.service.HrService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;

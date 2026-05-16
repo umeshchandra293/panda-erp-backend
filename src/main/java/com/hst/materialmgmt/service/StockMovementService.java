@@ -6,11 +6,11 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.hs.api.model.DashboardSummary;
-import com.hs.api.model.MaterialStockSummary;
-import com.hs.api.model.StockMovement;
-import com.hs.api.model.TrendPoint;
-import com.hs.api.model.WastageReason;
+import com.hst.api.model.DashboardSummary;
+import com.hst.api.model.MaterialStockSummary;
+import com.hst.api.model.StockMovement;
+import com.hst.api.model.TrendPoint;
+import com.hst.api.model.WastageReason;
 import com.hst.materialmgmt.objectMapper.BaseMapper;
 import com.hst.materialmgmt.objectMapper.StockMovementMapper;
 import com.hst.materialmgmt.repository.ParentRepositoryImpl;
