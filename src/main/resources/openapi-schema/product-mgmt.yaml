@@ -368,6 +368,7 @@ components:
         category_id: { type: string, example: 1001 }
         uom: { type: string, example: "EA" }
         is_active: { type: boolean, default: true }
+        units_per_box: { type: integer, example: 12, default: 1 }
 
     ProductCategory:
       type: object

@@ -123,14 +123,14 @@ components:
         materialName:
           type: string
           maxLength: 255
-          example: Potassium Bicarbonate (Food Grade)
+          example: PET Preform 1L (18.8g)
         description:
           type: string
           maxLength: 500
         category:
           type: string
-          enum: [CHEMICALS, PACKAGING, BRANDING, CAPS, LABELS, INGREDIENTS, EQUIPMENT, CONSUMABLES, OTHER]
-          example: CHEMICALS
+          enum: [PREFORMS, CHEMICALS, CAPS, LABELS, PACKAGING, OTHER]
+          example: PREFORMS
         uom:
           type: string
           enum: [KG, GM, LTR, ML, PCS, BOX, BAG, ROLL, METER]

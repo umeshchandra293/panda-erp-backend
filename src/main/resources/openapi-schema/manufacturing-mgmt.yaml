@@ -1,0 +1,261 @@
+openapi: 3.0.3
+info:
+  title: Manufacturing Management API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/material/mgmt
+
+tags:
+  - name: Manufacturing
+  - name: FGStock
+
+paths:
+
+  /manufacturing/shifts:
+    get:
+      tags: [Manufacturing]
+      operationId: getManufacturingShifts
+      parameters:
+        - name: fromDate
+          in: query
+          required: false
+          schema: { type: string, format: date }
+        - name: toDate
+          in: query
+          required: false
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ManufacturingShift' }
+
+    post:
+      tags: [Manufacturing]
+      operationId: createManufacturingShift
+      summary: >
+        Create a shift entry — auto-deducts raw materials via BOM
+        and updates finished goods stock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ShiftRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManufacturingShift' }
+
+  /manufacturing/shifts/{shiftId}:
+    get:
+      tags: [Manufacturing]
+      operationId: getManufacturingShiftById
+      parameters:
+        - name: shiftId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManufacturingShift' }
+        '404': { description: Not found }
+
+  /manufacturing/bom:
+    get:
+      tags: [Manufacturing]
+      operationId: getAllBoms
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ManufacturingBom' }
+    post:
+      tags: [Manufacturing]
+      operationId: createBom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ManufacturingBom' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManufacturingBom' }
+
+  /manufacturing/bom/{bomId}:
+    put:
+      tags: [Manufacturing]
+      operationId: updateBom
+      parameters:
+        - name: bomId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ManufacturingBom' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManufacturingBom' }
+    delete:
+      tags: [Manufacturing]
+      operationId: deleteBom
+      parameters:
+        - name: bomId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Deleted }
+
+  /fg-stock:
+    get:
+      tags: [FGStock]
+      operationId: getFgStock
+      summary: Current finished goods stock per product
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/FgStock' }
+
+  /fg-stock/ledger:
+    get:
+      tags: [FGStock]
+      operationId: getFgLedger
+      parameters:
+        - name: productId
+          in: query
+          required: false
+          schema: { type: string }
+        - name: fromDate
+          in: query
+          required: false
+          schema: { type: string, format: date }
+        - name: toDate
+          in: query
+          required: false
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/FgMovement' }
+
+  /fg-stock/dispatch:
+    post:
+      tags: [FGStock]
+      operationId: dispatchFgStock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DispatchRequest' }
+      responses:
+        '201': { description: Dispatched }
+        '400': { description: Insufficient stock }
+
+components:
+  schemas:
+
+    ManufacturingBatch:
+      type: object
+      properties:
+        batchId:      { type: string, readOnly: true }
+        shiftId:      { type: string, readOnly: true }
+        productId:    { type: string }
+        productName:  { type: string, readOnly: true }
+        plannedQty:   { type: integer }
+        actualQty:    { type: integer }
+        rejectedQty:  { type: integer }
+        notes:        { type: string }
+
+    ManufacturingShift:
+      type: object
+      properties:
+        shiftId:       { type: string, readOnly: true }
+        shiftDate:     { type: string, format: date }
+        shiftType:     { type: string, enum: [MORNING, EVENING, NIGHT] }
+        operatorName:  { type: string }
+        notes:         { type: string }
+        status:        { type: string }
+        totalUnits:    { type: integer, readOnly: true }
+        totalRejected: { type: integer, readOnly: true }
+
+    ShiftRequest:
+      type: object
+      required: [shift, batches]
+      properties:
+        shift:
+          $ref: '#/components/schemas/ManufacturingShift'
+        batches:
+          type: array
+          items: { $ref: '#/components/schemas/ManufacturingBatch' }
+
+    ManufacturingBom:
+      type: object
+      required: [productId, materialId, qtyPerUnit, uom]
+      properties:
+        bomId:      { type: string, readOnly: true }
+        productId:  { type: string }
+        materialId: { type: string }
+        qtyPerUnit: { type: number, format: double }
+        uom:        { type: string }
+        notes:      { type: string }
+        isActive:   { type: boolean }
+
+    FgStock:
+      type: object
+      properties:
+        fgId:        { type: string, readOnly: true }
+        productId:   { type: string }
+        productName: { type: string, readOnly: true }
+        sku:         { type: string, readOnly: true }
+        quantity:    { type: integer }
+        unit:        { type: string }
+
+    FgMovement:
+      type: object
+      properties:
+        movementId:   { type: string, readOnly: true }
+        productId:    { type: string }
+        productName:  { type: string, readOnly: true }
+        movementType: { type: string, enum: [PRODUCED, DISPATCHED] }
+        quantity:     { type: integer }
+        referenceId:  { type: string }
+        notes:        { type: string }
+        movementDate: { type: string, format: date }
+
+    DispatchRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId:   { type: string }
+        quantity:    { type: integer }
+        referenceId: { type: string }
+        notes:       { type: string }

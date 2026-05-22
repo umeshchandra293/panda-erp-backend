@@ -25,10 +25,8 @@ public class GrnItemRepository extends ParentRepositoryImpl {
 
     public Flux<GrnItemEntity> findByGrnId(String grnId) {
         String sql = """
-            SELECT gi.*, m.material_name
-            FROM erp_finance_schema.rm_grn_item_tbl gi
-            LEFT JOIN erp_finance_schema.rm_material_tbl m
-                   ON m.material_id = gi.material_id
+            SELECT gi.*
+            FROM rm_material_schema.rm_grn_item_tbl gi
             WHERE gi.grn_id = :grnId
             """;
         return databaseClient.sql(sql)
@@ -38,7 +36,7 @@ public class GrnItemRepository extends ParentRepositoryImpl {
 
     public Mono<String> nextGrnItemId() {
         return databaseClient
-                .sql("SELECT nextval('erp_finance_schema.grn_item_code_seq')")
+                .sql("SELECT nextval('rm_material_schema.grn_item_code_seq')")
                 .map((row, meta) -> row.get(0, Long.class)).one()
                 .map(n -> String.format("GRNI-%06d", n));
     }

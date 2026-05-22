@@ -223,13 +223,13 @@
                             <inputSpec>${openapi.schema.dir}/hr-mgmt.yaml</inputSpec>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>production-mgmt</id>
-                        <goals><goal>generate</goal></goals>
-                        <configuration>
-                            <inputSpec>${openapi.schema.dir}/production-mgmt.yaml</inputSpec>
-                        </configuration>
-                    </execution>
+<execution>
+    <id>manufacturing-mgmt</id>
+    <goals><goal>generate</goal></goals>
+    <configuration>
+        <inputSpec>${openapi.schema.dir}/manufacturing-mgmt.yaml</inputSpec>
+    </configuration>
+</execution>
                     <execution>
                         <id>grn-mgmt</id>
                         <goals><goal>generate</goal></goals>

@@ -10,7 +10,8 @@ import com.hst.api.FgStockApi;
 import com.hst.api.ProductionApi;
 import com.hst.api.model.FgStockItem;
 import com.hst.api.model.ProductionShift;
-import com.hst.api.model.ProductionShiftRequest;
+import com.hst.api.model
+.ProductionShiftRequest;
 import com.hst.materialmgmt.production.service.ProductionService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import reactor.core.publisher.Flux;
