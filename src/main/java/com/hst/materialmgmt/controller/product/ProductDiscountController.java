@@ -34,28 +34,34 @@ public class ProductDiscountController extends BaseController implements Marketi
     }
 
     @Override
-    public Mono<ResponseEntity<ProductDiscount>> getProductDiscountById(Integer discountId, ServerWebExchange exchange) {
-        return findByKey(productDiscountService, String.valueOf(discountId), exchange)
+    public Mono<ResponseEntity<ProductDiscount>> getProductDiscountById(
+            String discountId, ServerWebExchange exchange) {
+        return findByKey(productDiscountService, discountId, exchange)
                 .cast(ProductDiscount.class).map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> createProductDiscount(Mono<ProductDiscount> productDiscount, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> createProductDiscount(
+            Mono<ProductDiscount> productDiscount, ServerWebExchange exchange) {
         return create(productDiscountService, productDiscount.cast(Object.class), exchange)
                 .cast(ProductDiscount.class)
                 .map(p -> ResponseEntity.status(HttpStatus.CREATED).<Void>build());
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> updateProductDiscount(Integer discountId, Mono<ProductDiscount> productDiscount, ServerWebExchange exchange) {
-        return update(productDiscountService, String.valueOf(discountId), productDiscount.cast(Object.class), exchange)
-                .cast(ProductDiscount.class).map(p -> ResponseEntity.ok().<Void>build())
+    public Mono<ResponseEntity<Void>> updateProductDiscount(
+            String discountId, Mono<ProductDiscount> productDiscount, ServerWebExchange exchange) {
+        return update(productDiscountService, discountId,
+                productDiscount.cast(Object.class), exchange)
+                .cast(ProductDiscount.class)
+                .map(p -> ResponseEntity.ok().<Void>build())
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> deleteProductDiscount(Integer discountId, ServerWebExchange exchange) {
-        return delete(productDiscountService, String.valueOf(discountId), exchange);
+    public Mono<ResponseEntity<Void>> deleteProductDiscount(
+            String discountId, ServerWebExchange exchange) {
+        return delete(productDiscountService, discountId, exchange);
     }
 }

@@ -7,10 +7,23 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class ProductCodeGenerator {
+
     @Autowired private DatabaseClient databaseClient;
 
+    private static final String NEXT_ID_SQL = """
+        SELECT s.n
+        FROM generate_series(1, (
+            SELECT COUNT(*) + 1 FROM rm_material_schema.product_tbl
+        )) AS s(n)
+        WHERE NOT EXISTS (
+            SELECT 1 FROM rm_material_schema.product_tbl
+            WHERE product_id = CONCAT('PRD-', LPAD(s.n::text, 6, '0'))
+        )
+        ORDER BY s.n LIMIT 1
+        """;
+
     public Mono<String> nextProductCode() {
-        return databaseClient.sql("SELECT nextval('rm_material_schema.product_code_seq')")
+        return databaseClient.sql(NEXT_ID_SQL)
                 .map((row, meta) -> row.get(0, Long.class)).one()
                 .map(n -> String.format("PRD-%06d", n));
     }

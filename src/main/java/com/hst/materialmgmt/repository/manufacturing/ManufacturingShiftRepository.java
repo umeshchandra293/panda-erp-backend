@@ -16,9 +16,7 @@ public class ManufacturingShiftRepository extends ParentRepositoryImpl {
     @Autowired private ManufacturingShiftRowMapper rowMapper;
 
     @Override protected String getTableName() { return "manufacturing_shift_tbl"; }
-    @Override protected Map<String, Object> getKeyParamMap(String id) {
-        return Map.of("shift_id", id);
-    }
+    @Override protected Map<String, Object> getKeyParamMap(String id) { return Map.of("shift_id", id); }
     @SuppressWarnings("unchecked")
     @Override protected <T> BaseRowMapper<T> getRowMapper() { return (BaseRowMapper<T>) rowMapper; }
     @SuppressWarnings("unchecked")
@@ -33,8 +31,13 @@ public class ManufacturingShiftRepository extends ParentRepositoryImpl {
     }
 
     public Mono<String> nextShiftId() {
-        return databaseClient
-                .sql("SELECT nextval('rm_material_schema.manufacturing_shift_seq')")
+        return databaseClient.sql("""
+            SELECT s.n FROM generate_series(1,(SELECT COUNT(*)+1 FROM rm_material_schema.manufacturing_shift_tbl)) AS s(n)
+            WHERE NOT EXISTS (
+                SELECT 1 FROM rm_material_schema.manufacturing_shift_tbl
+                WHERE shift_id = CONCAT('SHIFT-', LPAD(s.n::text,6,'0'))
+            ) ORDER BY s.n LIMIT 1
+            """)
                 .map((row, meta) -> row.get(0, Long.class)).one()
                 .map(n -> String.format("SHIFT-%06d", n));
     }

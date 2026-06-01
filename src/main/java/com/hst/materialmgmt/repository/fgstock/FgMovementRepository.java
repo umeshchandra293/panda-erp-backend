@@ -17,9 +17,7 @@ public class FgMovementRepository extends ParentRepositoryImpl {
     @Autowired private FgMovementRowMapper rowMapper;
 
     @Override protected String getTableName() { return "fg_movement_tbl"; }
-    @Override protected Map<String, Object> getKeyParamMap(String id) {
-        return Map.of("movement_id", id);
-    }
+    @Override protected Map<String, Object> getKeyParamMap(String id) { return Map.of("movement_id", id); }
     @SuppressWarnings("unchecked")
     @Override protected <T> BaseRowMapper<T> getRowMapper() { return (BaseRowMapper<T>) rowMapper; }
     @SuppressWarnings("unchecked")
@@ -42,8 +40,13 @@ public class FgMovementRepository extends ParentRepositoryImpl {
     }
 
     public Mono<String> nextMovementId() {
-        return databaseClient
-                .sql("SELECT nextval('rm_material_schema.fg_movement_seq')")
+        return databaseClient.sql("""
+            SELECT s.n FROM generate_series(1,(SELECT COUNT(*)+1 FROM rm_material_schema.fg_movement_tbl)) AS s(n)
+            WHERE NOT EXISTS (
+                SELECT 1 FROM rm_material_schema.fg_movement_tbl
+                WHERE movement_id = CONCAT('FGM-', LPAD(s.n::text,6,'0'))
+            ) ORDER BY s.n LIMIT 1
+            """)
                 .map((row, meta) -> row.get(0, Long.class)).one()
                 .map(n -> String.format("FGM-%06d", n));
     }

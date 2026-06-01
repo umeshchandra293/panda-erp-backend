@@ -22,17 +22,13 @@ public class ProductCategoryController extends BaseController
 
     @Autowired private ProductCategoryService productCategoryService;
 
-    // ── ProductCategoriesApi ──────────────────────────────────────────────
-
     @Override
-    public Mono<ResponseEntity<ProductCategory>> getAllCategories(
-            ServerWebExchange exchange) {
+    public Mono<ResponseEntity<ProductCategory>> getAllCategories(ServerWebExchange exchange) {
         return Mono.just(ResponseEntity.ok((ProductCategory) null));
     }
 
     @GetMapping("/product-categories/all")
-    public Mono<ResponseEntity<List<ProductCategory>>> getAllCategoriesList(
-            ServerWebExchange exchange) {
+    public Mono<ResponseEntity<List<ProductCategory>>> getAllCategoriesList(ServerWebExchange exchange) {
         return findAll(productCategoryService, exchange)
                 .cast(ProductCategory.class).collectList()
                 .map(ResponseEntity::ok)
@@ -41,17 +37,24 @@ public class ProductCategoryController extends BaseController
 
     @Override
     public Mono<ResponseEntity<ProductCategory>> getCategoryById(
-            Integer categoryId, ServerWebExchange exchange) {
-        return findByKey(productCategoryService, String.valueOf(categoryId), exchange)
+            String categoryId, ServerWebExchange exchange) {
+        return findByKey(productCategoryService, categoryId, exchange)
                 .cast(ProductCategory.class).map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
+    public Mono<ResponseEntity<Void>> createCategory(
+            Mono<ProductCategory> productCategory, ServerWebExchange exchange) {
+        return create(productCategoryService, productCategory.cast(Object.class), exchange)
+                .cast(ProductCategory.class)
+                .map(p -> ResponseEntity.status(HttpStatus.CREATED).<Void>build());
+    }
+
+    @Override
     public Mono<ResponseEntity<Void>> updateCategory(
-            Integer categoryId, Mono<ProductCategory> productCategory,
-            ServerWebExchange exchange) {
-        return update(productCategoryService, String.valueOf(categoryId),
+            String categoryId, Mono<ProductCategory> productCategory, ServerWebExchange exchange) {
+        return update(productCategoryService, categoryId,
                 productCategory.cast(Object.class), exchange)
                 .cast(ProductCategory.class)
                 .map(p -> ResponseEntity.ok().<Void>build())
@@ -60,17 +63,7 @@ public class ProductCategoryController extends BaseController
 
     @Override
     public Mono<ResponseEntity<Void>> deleteCategory(
-            Integer categoryId, ServerWebExchange exchange) {
-        return delete(productCategoryService, String.valueOf(categoryId), exchange);
-    }
-
-    // ── CategoriesApi (createCategory lives here) ─────────────────────────
-
-    @Override
-    public Mono<ResponseEntity<Void>> createCategory(
-            Mono<ProductCategory> productCategory, ServerWebExchange exchange) {
-        return create(productCategoryService, productCategory.cast(Object.class), exchange)
-                .cast(ProductCategory.class)
-                .map(p -> ResponseEntity.status(HttpStatus.CREATED).<Void>build());
+            String categoryId, ServerWebExchange exchange) {
+        return delete(productCategoryService, categoryId, exchange);
     }
 }

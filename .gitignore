@@ -23,3 +23,17 @@
 hs_err_pid*
 replay_pid*
 /target/
+target/
+*.class
+*.jar
+.idea/
+*.iml
+*.iws
+.DS_Store
+target/
+*.class
+*.jar
+.idea/
+*.iml
+*.iws
+.DS_Store

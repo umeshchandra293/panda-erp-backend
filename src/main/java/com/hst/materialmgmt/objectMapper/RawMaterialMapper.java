@@ -28,6 +28,9 @@ public class RawMaterialMapper extends BaseMapper {
                 ? BigDecimal.valueOf(mat.getReorderLevel()) : BigDecimal.ZERO);
         e.setSafetyStockLevel(mat.getSafetyStockLevel() != null
                 ? BigDecimal.valueOf(mat.getSafetyStockLevel()) : BigDecimal.ZERO);
+        // unit_price — set from model, default 0
+        e.setUnitPrice(mat.getUnitPrice() != null
+                ? BigDecimal.valueOf(mat.getUnitPrice()) : BigDecimal.ZERO);
         e.setIsActive(mat.getIsActive() != null ? mat.getIsActive() : Boolean.TRUE);
         return e;
     }
@@ -61,6 +64,8 @@ public class RawMaterialMapper extends BaseMapper {
         mat.setHsnSacCode(e.getHsnSacCode());
         if (e.getReorderLevel()     != null) mat.setReorderLevel(e.getReorderLevel().doubleValue());
         if (e.getSafetyStockLevel() != null) mat.setSafetyStockLevel(e.getSafetyStockLevel().doubleValue());
+        // unit_price — return to frontend
+        if (e.getUnitPrice()        != null) mat.setUnitPrice(e.getUnitPrice().doubleValue());
         mat.setIsActive(e.getIsActive());
         return mat;
     }

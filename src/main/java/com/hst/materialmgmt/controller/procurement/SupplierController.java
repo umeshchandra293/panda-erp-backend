@@ -1,4 +1,4 @@
-package com.hst.materialmgmt.controller;
+package com.hst.materialmgmt.controller.procurement;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,6 +10,7 @@ import org.springframework.web.server.ServerWebExchange;
 import com.hst.api.SupplierApi;
 import com.hst.api.model.Supplier;
 import com.hst.materialmgmt.service.SupplierService;
+import com.hst.materialmgmt.controller.BaseController; // ← ADD THIS LINE
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import reactor.core.publisher.Flux;

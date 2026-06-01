@@ -1,10 +1,13 @@
 package com.hst.materialmgmt.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.hst.api.model.DashboardSummary;
 import com.hst.api.model.MaterialStockSummary;
@@ -19,10 +22,6 @@ import com.hst.materialmgmt.repository.StockMovementRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-/**
- * Stock movement service — handles single-row CRUD plus aggregation queries
- * for the inventory dashboard.
- */
 @Service
 public class StockMovementService extends ParentBaseServiceImpl {
 
@@ -33,9 +32,6 @@ public class StockMovementService extends ParentBaseServiceImpl {
     @Override protected BaseMapper getMapper() { return mapper; }
     @Override protected ParentRepositoryImpl getParentRepository() { return repository; }
 
-    /**
-     * Override create to inject server-generated movement code.
-     */
     @Override
     public Mono<Object> createFullHierarchy(Mono<Object> parentMono) {
         if (parentMono == null) {
@@ -54,25 +50,67 @@ public class StockMovementService extends ParentBaseServiceImpl {
     public Flux<StockMovement> findFiltered(
             String materialId, String movementType,
             LocalDate fromDate, LocalDate toDate) {
-
         return repository.findFiltered(materialId, movementType, fromDate, toDate)
                 .map(entity -> (StockMovement) mapper.toModel(entity));
     }
 
-    // ─── Batch insert (multiple movements in one call) ─────────────
-    // Goes through createFullHierarchy so each row gets a code AND uses the
-    // existing persistence path (no direct save() call).
+    // ─── Batch insert with negative stock guard ────────────────────
+    // For WASTAGE and CONSUMPTION: check current stock >= quantity before saving.
+    // For INBOUND and ADJUSTMENT: no stock check needed.
 
     public Flux<StockMovement> createBatch(List<StockMovement> movements) {
         return Flux.fromIterable(movements)
-                .concatMap(m -> createFullHierarchy(Mono.just((Object) m))
+                .concatMap(m -> validateMovement(m)
+                        .then(createFullHierarchy(Mono.just((Object) m)))
                         .cast(StockMovement.class));
+    }
+
+    // ─── Validate: prevent negative stock ─────────────────────────
+
+    private Mono<Void> validateMovement(StockMovement m) {
+        // Only outbound movements can cause negative stock
+        if (m.getMovementType() == null) return Mono.empty();
+        String type = m.getMovementType().name(); // enum.name() = "WASTAGE", "CONSUMPTION" etc
+
+        if (!type.equals("WASTAGE") && !type.equals("CONSUMPTION")) {
+            return Mono.empty();
+        }
+
+        if (m.getMaterialId() == null || m.getMaterialId().isBlank()) {
+            return Mono.error(new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "materialId is required"));
+        }
+
+        // quantity is Double in the generated model
+        double requested = m.getQuantity() != null ? m.getQuantity() : 0.0;
+        if (requested <= 0) {
+            return Mono.error(new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "quantity must be > 0"));
+        }
+
+        // Get current stock on hand from DB and check sufficiency
+        return repository.findStockOnHandWithMaster(
+                LocalDate.of(2000, 1, 1), LocalDate.now())
+            .filter(row -> m.getMaterialId().equals(row.materialId()))
+            .next()
+            .flatMap(row -> {
+                double currentStock = row.stockOnHand() != null
+                    ? row.stockOnHand().doubleValue() : 0.0;
+                if (requested > currentStock) {
+                    return Mono.error(new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        String.format(
+                            "Insufficient stock for %s — available: %.2f, requested: %.2f",
+                            m.getMaterialId(), currentStock, requested)));
+                }
+                return Mono.<Void>empty();
+            })
+            .then();
     }
 
     // ─── Dashboard aggregations ────────────────────────────────────
 
     public Mono<DashboardSummary> getDashboardSummary(LocalDate fromDate, LocalDate toDate) {
-
         Mono<List<MaterialStockSummary>> breakdownMono = repository
                 .findStockOnHandWithMaster(fromDate, toDate)
                 .map(this::toMaterialStockSummary)
@@ -80,7 +118,7 @@ public class StockMovementService extends ParentBaseServiceImpl {
 
         return Mono.zip(repository.findKpiTotals(fromDate, toDate), breakdownMono)
                 .map(tuple -> {
-                    var totals = tuple.getT1();
+                    var totals   = tuple.getT1();
                     var breakdown = tuple.getT2();
                     DashboardSummary s = new DashboardSummary();
                     s.setTotalInbound(safeDouble(totals.totalInbound()));
@@ -129,7 +167,6 @@ public class StockMovementService extends ParentBaseServiceImpl {
         s.setWastagePeriod(safeDouble(r.wastagePeriod()));
         s.setReorderLevel(safeDouble(r.reorderLevel()));
         s.setSafetyStockLevel(safeDouble(r.safetyStockLevel()));
-
         Double stock = s.getStockOnHand();
         if (stock != null) {
             s.setBelowReorder(s.getReorderLevel() != null && stock < s.getReorderLevel());

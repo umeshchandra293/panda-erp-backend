@@ -9,8 +9,16 @@ import reactor.core.publisher.Mono;
 public class ProductPriceCodeGenerator {
     @Autowired private DatabaseClient databaseClient;
 
+    private static final String NEXT_ID_SQL = """
+        SELECT s.n FROM generate_series(1,(SELECT COUNT(*)+1 FROM rm_material_schema.product_price_tbl)) AS s(n)
+        WHERE NOT EXISTS (
+            SELECT 1 FROM rm_material_schema.product_price_tbl
+            WHERE product_price_id = CONCAT('PRC-', LPAD(s.n::text,6,'0'))
+        ) ORDER BY s.n LIMIT 1
+        """;
+
     public Mono<String> nextPriceCode() {
-        return databaseClient.sql("SELECT nextval('rm_material_schema.product_price_code_seq')")
+        return databaseClient.sql(NEXT_ID_SQL)
                 .map((row, meta) -> row.get(0, Long.class)).one()
                 .map(n -> String.format("PRC-%06d", n));
     }

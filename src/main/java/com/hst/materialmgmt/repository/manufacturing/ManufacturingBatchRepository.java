@@ -16,9 +16,7 @@ public class ManufacturingBatchRepository extends ParentRepositoryImpl {
     @Autowired private ManufacturingBatchRowMapper rowMapper;
 
     @Override protected String getTableName() { return "manufacturing_batch_tbl"; }
-    @Override protected Map<String, Object> getKeyParamMap(String id) {
-        return Map.of("batch_id", id);
-    }
+    @Override protected Map<String, Object> getKeyParamMap(String id) { return Map.of("batch_id", id); }
     @SuppressWarnings("unchecked")
     @Override protected <T> BaseRowMapper<T> getRowMapper() { return (BaseRowMapper<T>) rowMapper; }
     @SuppressWarnings("unchecked")
@@ -36,8 +34,13 @@ public class ManufacturingBatchRepository extends ParentRepositoryImpl {
     }
 
     public Mono<String> nextBatchId() {
-        return databaseClient
-                .sql("SELECT nextval('rm_material_schema.manufacturing_batch_seq')")
+        return databaseClient.sql("""
+            SELECT s.n FROM generate_series(1,(SELECT COUNT(*)+1 FROM rm_material_schema.manufacturing_batch_tbl)) AS s(n)
+            WHERE NOT EXISTS (
+                SELECT 1 FROM rm_material_schema.manufacturing_batch_tbl
+                WHERE batch_id = CONCAT('BATCH-', LPAD(s.n::text,6,'0'))
+            ) ORDER BY s.n LIMIT 1
+            """)
                 .map((row, meta) -> row.get(0, Long.class)).one()
                 .map(n -> String.format("BATCH-%06d", n));
     }

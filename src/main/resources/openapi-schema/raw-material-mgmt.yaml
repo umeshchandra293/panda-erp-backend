@@ -43,7 +43,6 @@ paths:
       tags: [RawMaterial]
       operationId: createMaterial
       summary: Create a new raw material
-      description: materialId is server-generated and must NOT be included in the request body.
       requestBody:
         required: true
         content:
@@ -149,6 +148,13 @@ components:
           format: double
           minimum: 0
           default: 0
+        unitPrice:
+          type: number
+          format: double
+          minimum: 0
+          default: 0
+          description: Default purchase price per UOM unit (e.g. ₹ per KG)
+          example: 85.50
         isActive:
           type: boolean
           default: true

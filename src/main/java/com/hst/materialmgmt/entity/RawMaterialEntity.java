@@ -11,7 +11,7 @@ import lombok.experimental.SuperBuilder;
 @Data @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor @NoArgsConstructor
 @Accessors(chain = true) @ToString @SuperBuilder
-@Table(value = "rm_material_tbl", schema = "rm_material_schema")  // ← fixed schema
+@Table(value = "rm_material_tbl", schema = "rm_material_schema")
 public class RawMaterialEntity extends BaseEntity {
 
     @Id @Column("material_id")
@@ -23,13 +23,13 @@ public class RawMaterialEntity extends BaseEntity {
     @Column("description")
     private String description;
 
-    @Column("category")       // ← now a plain string column
+    @Column("category")
     private String category;
 
-    @Column("uom")            // ← was unit_of_measure in DB, now uom
+    @Column("uom")
     private String uom;
 
-    @Column("hsn_sac_code")   // ← new column
+    @Column("hsn_sac_code")
     private String hsnSacCode;
 
     @Column("reorder_level")
@@ -37,6 +37,9 @@ public class RawMaterialEntity extends BaseEntity {
 
     @Column("safety_stock_level")
     private BigDecimal safetyStockLevel;
+
+    @Column("unit_price")
+    private BigDecimal unitPrice;
 
     @Column("is_active")
     private Boolean isActive;

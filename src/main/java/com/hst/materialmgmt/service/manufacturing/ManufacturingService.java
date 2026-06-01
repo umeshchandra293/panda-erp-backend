@@ -5,7 +5,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import com.hst.materialmgmt.entity.StockMovementEntity;
 import com.hst.materialmgmt.entity.manufacturing.ManufacturingBatchEntity;
 import com.hst.materialmgmt.entity.manufacturing.ManufacturingBomEntity;
@@ -43,9 +45,10 @@ public class ManufacturingService {
 
     /**
      * Create shift:
-     * 1. Generate shift ID
-     * 2. Save shift header
-     * 3. For each batch: save batch + deduct raw materials via BOM
+     * 1. Validate all BOM materials have sufficient stock BEFORE saving anything
+     * 2. Generate shift ID
+     * 3. Save shift header
+     * 4. For each batch: save batch + deduct raw materials via BOM + update FG stock
      */
     public Mono<ManufacturingShiftEntity> createShift(
             ManufacturingShiftEntity shift,
@@ -57,14 +60,70 @@ public class ManufacturingService {
         shift.setTotalRejected(totalRejected);
         shift.setStatus("CONFIRMED");
 
-        return shiftRepo.nextShiftId().flatMap(shiftId -> {
-            shift.setShiftId(shiftId);
-            return shiftRepo.create(shift, ManufacturingShiftEntity.class)
-                    .flatMap(saved ->
-                        Flux.fromIterable(batches)
-                            .concatMap(batch -> saveBatchAndDeductStock(shiftId, batch))
-                            .then(Mono.just((ManufacturingShiftEntity) saved)));
-        });
+        // ── Step 1: validate all materials have enough stock before saving anything ──
+        return validateAllMaterialsHaveStock(batches)
+                .then(shiftRepo.nextShiftId())
+                .flatMap(shiftId -> {
+                    shift.setShiftId(shiftId);
+                    return shiftRepo.create(shift, ManufacturingShiftEntity.class)
+                            .flatMap(saved ->
+                                Flux.fromIterable(batches)
+                                    .concatMap(batch -> saveBatchAndDeductStock(shiftId, batch))
+                                    .then(Mono.just((ManufacturingShiftEntity) saved)));
+                });
+    }
+
+    /**
+     * Check every BOM material across all batches has sufficient stock.
+     * Aggregates total consumption per material, then checks each against stock on hand.
+     * Rejects with 400 if ANY material would go negative.
+     */
+    private Mono<Void> validateAllMaterialsHaveStock(List<ManufacturingBatchEntity> batches) {
+        return Flux.fromIterable(batches)
+                .concatMap(batch -> {
+                    int qty = batch.getActualQty() != null ? batch.getActualQty() : 0;
+                    if (qty <= 0) return Flux.empty();
+                    return bomRepo.findByProductId(batch.getProductId())
+                            .flatMap(bom -> {
+                                BigDecimal required = bom.getQtyPerUnit()
+                                        .multiply(BigDecimal.valueOf(qty));
+                                // Get current stock for this material
+                                return getCurrentStock(bom.getMaterialId())
+                                        .flatMap(currentStock -> {
+                                            if (required.compareTo(currentStock) > 0) {
+                                                return Mono.error(new ResponseStatusException(
+                                                    HttpStatus.BAD_REQUEST,
+                                                    String.format(
+                                                        "Insufficient stock for material %s — " +
+                                                        "required: %.4f, available: %.4f. " +
+                                                        "Please receive more stock before saving this shift.",
+                                                        bom.getMaterialId(),
+                                                        required.doubleValue(),
+                                                        currentStock.doubleValue())));
+                                            }
+                                            return Mono.empty();
+                                        });
+                            });
+                }).then();
+    }
+
+    /**
+     * Get current stock on hand for a material:
+     * SUM(INBOUND + ADJUSTMENT) - SUM(CONSUMPTION + WASTAGE)
+     */
+    private Mono<BigDecimal> getCurrentStock(String materialId) {
+        return movementRepo.findFiltered(materialId, null, null, null)
+                .reduce(BigDecimal.ZERO, (stock, movement) -> {
+                    BigDecimal qty = movement.getQuantity() != null
+                            ? movement.getQuantity() : BigDecimal.ZERO;
+                    String type = movement.getMovementType() != null
+                            ? movement.getMovementType().toUpperCase() : "";
+                    return switch (type) {
+                        case "INBOUND", "ADJUSTMENT" -> stock.add(qty);
+                        case "CONSUMPTION", "WASTAGE" -> stock.subtract(qty);
+                        default -> stock;
+                    };
+                });
     }
 
     private Mono<Void> saveBatchAndDeductStock(String shiftId, ManufacturingBatchEntity batch) {
@@ -75,11 +134,15 @@ public class ManufacturingService {
                     .flatMap(saved -> {
                         int actualQty = batch.getActualQty() != null ? batch.getActualQty() : 0;
                         return deductRawMaterials(shiftId, batch.getProductId(), actualQty)
-                                .then(fgStockService.addStock(batch.getProductId(), actualQty, shiftId));
+                                .then(fgStockService.addStock(
+                                        batch.getProductId(), actualQty, shiftId));
                     });
         });
     }
 
+    /**
+     * Insert CONSUMPTION movements — stock check already passed in validateAllMaterialsHaveStock.
+     */
     private Mono<Void> deductRawMaterials(String shiftId, String productId, int actualQty) {
         if (actualQty <= 0) return Mono.empty();
         return bomRepo.findByProductId(productId)

@@ -1,4 +1,4 @@
-package com.hst.materialmgmt.controller;
+package com.hst.materialmgmt.controller.procurement;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +12,6 @@ import com.hst.api.SupplierMaterialApi;
 import com.hst.api.model.SupplierMaterialMapping;
 import com.hst.materialmgmt.service.SupplierMaterialMapService;
 import com.hst.materialmgmt.service.SupplierMaterialMapService.DuplicateMappingException;
-
 import io.swagger.v3.oas.annotations.tags.Tag;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

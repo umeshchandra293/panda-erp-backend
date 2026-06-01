@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,13 +28,15 @@ public class StockMovementController implements StockMovementApi {
 
     @Autowired private StockMovementService service;
 
+    // ── Original OpenAPI endpoints (/stock-movements) ────────────────────────
+
     @Override
     public Mono<ResponseEntity<Flux<StockMovement>>> getAllMovements(
             String materialId, String movementType,
             LocalDate fromDate, LocalDate toDate,
             ServerWebExchange exchange) {
-        Flux<StockMovement> flux = service.findFiltered(materialId, movementType, fromDate, toDate);
-        return Mono.just(ResponseEntity.ok(flux));
+        return Mono.just(ResponseEntity.ok(
+                service.findFiltered(materialId, movementType, fromDate, toDate)));
     }
 
     @Override
@@ -43,6 +46,32 @@ public class StockMovementController implements StockMovementApi {
                 .map(list -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(service.createBatch(list)))
                 .doOnError(e -> log.error("Batch movement record failed", e));
+    }
+
+    // ── Frontend alias: GET /material/mgmt/inventory/movements ───────────────
+
+    @GetMapping("/inventory/movements")
+    public Mono<ResponseEntity<Flux<StockMovement>>> getMovements(
+            @RequestParam(required = false) String materialId,
+            @RequestParam(required = false) String movementType,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+        return Mono.just(ResponseEntity.ok(
+                service.findFiltered(materialId, movementType, fromDate, toDate)));
+    }
+
+    // ── Frontend alias: POST /material/mgmt/inventory/movements ─────────────
+    // Used by ScrapEntryPage and InventoryPage adjust modal
+
+    @PostMapping("/inventory/movements")
+    public Mono<ResponseEntity<StockMovement>> createMovement(
+            @RequestBody StockMovement movement) {
+        return service.createBatch(java.util.List.of(movement))
+                .next()
+                .map(saved -> ResponseEntity.status(HttpStatus.CREATED).body(saved))
+                .doOnError(e -> log.error("Movement creation failed: {}", e.getMessage()));
     }
 
     // ── Dashboard endpoints ───────────────────────────────────────────────────

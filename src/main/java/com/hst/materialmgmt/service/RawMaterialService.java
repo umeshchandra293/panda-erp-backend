@@ -34,23 +34,15 @@ public class RawMaterialService extends ParentBaseServiceImpl {
     @Autowired private RawMaterialMapper      mapper;
     @Autowired private MaterialCodeGenerator  codeGenerator;
 
-    // ── GRN dependencies ──────────────────────────────────────────────────────
     @Autowired private GrnRepository          grnRepo;
     @Autowired private GrnItemRepository      grnItemRepo;
     @Autowired private StockMovementRepository movementRepo;
 
-    @Override
-    protected BaseMapper getMapper() { return mapper; }
+    @Override protected BaseMapper getMapper()                       { return mapper; }
+    @Override protected ParentRepositoryImpl getParentRepository()   { return repository; }
 
-    @Override
-    protected ParentRepositoryImpl getParentRepository() { return repository; }
+    // ── Material create — inject server-generated code ────────────────────────
 
-    // ── Material CRUD ─────────────────────────────────────────────────────────
-
-    /**
-     * Injects a server-generated material code before saving.
-     * Clients must NOT send materialId — it is assigned here.
-     */
     @Override
     public Mono<Object> createFullHierarchy(Mono<Object> parentMono) {
         if (parentMono == null)
@@ -59,16 +51,27 @@ public class RawMaterialService extends ParentBaseServiceImpl {
         Mono<Object> codedMono = parentMono.flatMap(model -> {
             RawMaterial mat = (RawMaterial) model;
             return codeGenerator.nextMaterialCode()
-                    .map(code -> {
-                        mat.setMaterialId(code);
-                        return (Object) mat;
-                    });
+                    .map(code -> { mat.setMaterialId(code); return (Object) mat; });
         });
-
         return super.createFullHierarchy(codedMono);
     }
 
-    // ── GRN — list ────────────────────────────────────────────────────────────
+    // ── Material update — override to also save unit_price directly ───────────
+    // The generic buildDataParams sometimes skips BigDecimal fields.
+    // We run a targeted SQL after the generic update to guarantee unit_price is saved.
+
+    @Override
+    public Mono<Object> updateFullHierarchy(String id, Mono<Object> parentMono) {
+        return super.updateFullHierarchy(id, parentMono)
+                .flatMap(updated -> {
+                    RawMaterial mat = (RawMaterial) updated;
+                    double price = mat.getUnitPrice() != null ? mat.getUnitPrice() : 0.0;
+                    return repository.updateUnitPrice(id, BigDecimal.valueOf(price))
+                            .thenReturn(updated);
+                });
+    }
+
+    // ── GRN list ──────────────────────────────────────────────────────────────
 
     public Flux<GrnResponse> getAllGrns() {
         return grnRepo.findAllGrns()
@@ -86,15 +89,10 @@ public class RawMaterialService extends ParentBaseServiceImpl {
                         .map(items -> toGrnResponse(grn, items)));
     }
 
-    // ── GRN — create ──────────────────────────────────────────────────────────
-    // Flow:
-    //   1. Generate GRN ID
-    //   2. Save GRN header
-    //   3. For each item: save GRN item + create INBOUND stock movement
+    // ── GRN create ────────────────────────────────────────────────────────────
 
     public Mono<GrnResponse> createGrn(GrnRequest req) {
         return grnRepo.nextGrnId().flatMap(grnId -> {
-
             GrnEntity header = new GrnEntity();
             header.setGrnId(grnId);
             header.setSupplierCode(req.getSupplierCode());
@@ -111,18 +109,14 @@ public class RawMaterialService extends ParentBaseServiceImpl {
                                     ? req.getItems() : List.<GrnItemRequest>of())
                                     .concatMap(item -> saveItemAndMovement(grnId, item))
                                     .collectList()
-                                    .map(items -> toGrnResponse(
-                                            (GrnEntity) savedHeader, items)));
+                                    .map(items -> toGrnResponse((GrnEntity) savedHeader, items)));
         });
     }
 
     // ── Save one GRN item + INBOUND stock movement ────────────────────────────
 
-    private Mono<GrnItemResponse> saveItemAndMovement(
-            String grnId, GrnItemRequest item) {
-
+    private Mono<GrnItemResponse> saveItemAndMovement(String grnId, GrnItemRequest item) {
         return grnItemRepo.nextGrnItemId().flatMap(itemId -> {
-
             GrnItemEntity ie = new GrnItemEntity();
             ie.setGrnItemId(itemId);
             ie.setGrnId(grnId);
@@ -170,9 +164,8 @@ public class RawMaterialService extends ParentBaseServiceImpl {
         r.setNotes(e.getNotes());
         r.setItems(items);
         double total = items.stream()
-                .mapToDouble(i -> (i.getReceivedQty() == null
-                        || i.getUnitCost() == null) ? 0.0
-                        : i.getReceivedQty() * i.getUnitCost())
+                .mapToDouble(i -> (i.getReceivedQty() == null || i.getUnitCost() == null)
+                        ? 0.0 : i.getReceivedQty() * i.getUnitCost())
                 .sum();
         r.setTotalValue(total);
         return r;

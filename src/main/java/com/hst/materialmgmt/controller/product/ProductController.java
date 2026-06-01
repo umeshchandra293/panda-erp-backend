@@ -34,28 +34,33 @@ public class ProductController extends BaseController implements ProductsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Product>> getProductById(Integer productId, ServerWebExchange exchange) {
-        return findByKey(productService, String.valueOf(productId), exchange)
+    public Mono<ResponseEntity<Product>> getProductById(
+            String productId, ServerWebExchange exchange) {
+        return findByKey(productService, productId, exchange)
                 .cast(Product.class).map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> createProduct(Mono<Product> product, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> createProduct(
+            Mono<Product> product, ServerWebExchange exchange) {
         return create(productService, product.cast(Object.class), exchange)
                 .cast(Product.class)
                 .map(p -> ResponseEntity.status(HttpStatus.CREATED).<Void>build());
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> updateProduct(Integer productId, Mono<Product> product, ServerWebExchange exchange) {
-        return update(productService, String.valueOf(productId), product.cast(Object.class), exchange)
-                .cast(Product.class).map(p -> ResponseEntity.ok().<Void>build())
+    public Mono<ResponseEntity<Void>> updateProduct(
+            String productId, Mono<Product> product, ServerWebExchange exchange) {
+        return update(productService, productId, product.cast(Object.class), exchange)
+                .cast(Product.class)
+                .map(p -> ResponseEntity.ok().<Void>build())
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> deleteProduct(Integer productId, ServerWebExchange exchange) {
-        return delete(productService, String.valueOf(productId), exchange);
+    public Mono<ResponseEntity<Void>> deleteProduct(
+            String productId, ServerWebExchange exchange) {
+        return delete(productService, productId, exchange);
     }
 }

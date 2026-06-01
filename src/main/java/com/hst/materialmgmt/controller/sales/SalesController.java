@@ -1,4 +1,4 @@
-package com.hst.materialmgmt.controller;
+package com.hst.materialmgmt.controller.sales;
 
 import java.time.LocalDate;
 

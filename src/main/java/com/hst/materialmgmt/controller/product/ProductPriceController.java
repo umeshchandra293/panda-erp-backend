@@ -28,34 +28,41 @@ public class ProductPriceController extends BaseController implements ProductPri
     @GetMapping("/product-prices/all")
     public Mono<ResponseEntity<List<ProductPrice>>> getAllProductPricesList(ServerWebExchange exchange) {
         return findAll(productPriceService, exchange)
-                .cast(ProductPrice.class).collectList()
+                .cast(ProductPrice.class)
+                .collectList()
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.ok(List.of()));
     }
 
     @Override
-    public Mono<ResponseEntity<ProductPrice>> getProductPriceById(Integer productPriceId, ServerWebExchange exchange) {
-        return findByKey(productPriceService, String.valueOf(productPriceId), exchange)
-                .cast(ProductPrice.class).map(ResponseEntity::ok)
+    public Mono<ResponseEntity<ProductPrice>> getProductPriceById(
+            String productPriceId, ServerWebExchange exchange) {
+        return findByKey(productPriceService, productPriceId, exchange)
+                .cast(ProductPrice.class)
+                .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> createProductPrice(Mono<ProductPrice> productPrice, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> createProductPrice(
+            Mono<ProductPrice> productPrice, ServerWebExchange exchange) {
         return create(productPriceService, productPrice.cast(Object.class), exchange)
                 .cast(ProductPrice.class)
                 .map(p -> ResponseEntity.status(HttpStatus.CREATED).<Void>build());
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> updateProductPrice(Integer productPriceId, Mono<ProductPrice> productPrice, ServerWebExchange exchange) {
-        return update(productPriceService, String.valueOf(productPriceId), productPrice.cast(Object.class), exchange)
-                .cast(ProductPrice.class).map(p -> ResponseEntity.ok().<Void>build())
+    public Mono<ResponseEntity<Void>> updateProductPrice(
+            String productPriceId, Mono<ProductPrice> productPrice, ServerWebExchange exchange) {
+        return update(productPriceService, productPriceId, productPrice.cast(Object.class), exchange)
+                .cast(ProductPrice.class)
+                .map(p -> ResponseEntity.ok().<Void>build())
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> deleteProductPrice(Integer productPriceId, ServerWebExchange exchange) {
-        return delete(productPriceService, String.valueOf(productPriceId), exchange);
+    public Mono<ResponseEntity<Void>> deleteProductPrice(
+            String productPriceId, ServerWebExchange exchange) {
+        return delete(productPriceService, productPriceId, exchange);
     }
 }

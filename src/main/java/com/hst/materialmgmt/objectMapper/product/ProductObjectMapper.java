@@ -1,5 +1,6 @@
 package com.hst.materialmgmt.objectMapper.product;
 
+import java.math.BigDecimal;
 import org.springframework.stereotype.Component;
 import com.hst.api.model.Product;
 import com.hst.materialmgmt.entity.BaseEntity;
@@ -23,6 +24,14 @@ public class ProductObjectMapper extends BaseMapper {
         e.setIsActive(product.getIsActive());
         if (product.getUnitsPerBox() != null)
             e.setUnitsPerBox(product.getUnitsPerBox());
+        if (product.getCostPerCase() != null)
+            e.setCostPerCase(BigDecimal.valueOf(product.getCostPerCase()));
+        else if (isNew)
+            e.setCostPerCase(BigDecimal.ZERO);
+        if (product.getSellingPricePerCase() != null)
+            e.setSellingPricePerCase(BigDecimal.valueOf(product.getSellingPricePerCase()));
+        else if (isNew)
+            e.setSellingPricePerCase(BigDecimal.ZERO);
         return e;
     }
 
@@ -37,6 +46,8 @@ public class ProductObjectMapper extends BaseMapper {
         product.setUom(e.getUom());
         product.setIsActive(e.getIsActive());
         product.setUnitsPerBox(e.getUnitsPerBox());
+        if (e.getCostPerCase()          != null) product.setCostPerCase(e.getCostPerCase().doubleValue());
+        if (e.getSellingPricePerCase()  != null) product.setSellingPricePerCase(e.getSellingPricePerCase().doubleValue());
         return product;
     }
 }

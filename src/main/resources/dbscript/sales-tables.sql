@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 -- ============================================================================
 -- HS ERP - SALES MODULE TABLES
 -- Run AFTER supplier, material, and PO tables are in place.
@@ -441,7 +440,6 @@ SELECT 'products'  AS tbl, COUNT(*) FROM erp_finance_schema.sales_product_tbl  U
 SELECT 'targets'   AS tbl, COUNT(*) FROM erp_finance_schema.sales_daily_target_tbl UNION ALL
 SELECT 'visits'    AS tbl, COUNT(*) FROM erp_finance_schema.sales_visit_tbl    UNION ALL
 SELECT 'orders'    AS tbl, COUNT(*) FROM erp_finance_schema.sales_order_tbl    UNION ALL
-=======
 -- ============================================================================
 -- HS ERP - SALES MODULE TABLES
 -- Run AFTER supplier, material, and PO tables are in place.
@@ -884,5 +882,4 @@ SELECT 'products'  AS tbl, COUNT(*) FROM erp_finance_schema.sales_product_tbl  U
 SELECT 'targets'   AS tbl, COUNT(*) FROM erp_finance_schema.sales_daily_target_tbl UNION ALL
 SELECT 'visits'    AS tbl, COUNT(*) FROM erp_finance_schema.sales_visit_tbl    UNION ALL
 SELECT 'orders'    AS tbl, COUNT(*) FROM erp_finance_schema.sales_order_tbl    UNION ALL
->>>>>>> e83a97dde2129e673c5e7be6d373df2ebbfc7df2
 SELECT 'payments'  AS tbl, COUNT(*) FROM erp_finance_schema.sales_payment_tbl;
