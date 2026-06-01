@@ -74,7 +74,7 @@ public class JwtAuthFilter implements WebFilter {
         }
 
         String token = authHeader.substring(7);
-        if (!jwtUtil.validateToken(token)) {
+        if (!jwtUtil.isValid(token)) {
             res.setStatusCode(HttpStatus.UNAUTHORIZED);
             return res.setComplete();
         }
