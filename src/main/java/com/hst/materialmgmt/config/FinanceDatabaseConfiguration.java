@@ -1,6 +1,8 @@
 package com.hst.materialmgmt.config;
 
+import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,12 +16,25 @@ import org.springframework.transaction.reactive.TransactionalOperator;
 @Configuration
 public class FinanceDatabaseConfiguration extends DatabaseConfiguration {
 
-    // ConnectionFactory and DatabaseClient are intentionally NOT defined here.
-    // Spring Boot auto-configures them from spring.r2dbc.url (DATABASE_URL env var)
-    // which already has the correct Neon connection string with SSL.
+    // Reads directly from DATABASE_URL env variable via spring.r2dbc.url
+    @Value("${spring.r2dbc.url}")
+    private String r2dbcUrl;
 
     @Bean
     @Primary
+    @ConditionalOnMissingBean(ConnectionFactory.class)
+    public ConnectionFactory connectionFactory() {
+        System.out.println("=== CONNECTING TO: " + r2dbcUrl + " ===");
+        return ConnectionFactories.get(r2dbcUrl);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(DatabaseClient.class)
+    public DatabaseClient databaseClient(ConnectionFactory connectionFactory) {
+        return super.getDatabaseClient(connectionFactory);
+    }
+
+    @Bean
     @ConditionalOnMissingBean(R2dbcEntityTemplate.class)
     public R2dbcEntityTemplate r2dbcEntityTemplate(ConnectionFactory connectionFactory) {
         return super.r2dbcEntityTemplate(connectionFactory);
