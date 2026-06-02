@@ -12,18 +12,19 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 public class GlobalCorsConfig {
 
     @Bean
-    // This annotation is the magic bullet. It forces this filter to run BEFORE Spring Security.
-    @Order(Ordered.HIGHEST_PRECEDENCE) 
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     public CorsWebFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        
+
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://localhost:5173"); // Your exact React port
+        config.addAllowedOrigin("http://localhost:5173");
+        config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedOrigin("https://panda-frontend-zdnv.vercel.app");
         config.addAllowedHeader("*");
-        config.addAllowedMethod("*"); // Allows GET, POST, PUT, DELETE, OPTIONS
+        config.addAllowedMethod("*");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config); // Apply to all endpoints
+        source.registerCorsConfiguration("/**", config);
 
         return new CorsWebFilter(source);
     }
