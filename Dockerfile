@@ -3,7 +3,7 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 COPY src ./src
-ARG CACHEBUST=4
+ARG CACHEBUST=5
 RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:22-jre-alpine
