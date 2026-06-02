@@ -18,9 +18,19 @@ public class AuthController {
     public Mono<ResponseEntity<LoginResponse>> login(@RequestBody LoginRequest req) {
         return authService.login(req)
             .map(r -> ResponseEntity.ok(r))
-            .onErrorResume(e -> Mono.just(
-                ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .<LoginResponse>build()));
+            .onErrorResume(e -> {
+                // Log the REAL error so we can see it in Render logs
+                System.err.println("=== LOGIN ERROR ===");
+                System.err.println("Class: " + e.getClass().getName());
+                System.err.println("Message: " + e.getMessage());
+                if (e.getCause() != null) {
+                    System.err.println("Cause: " + e.getCause().getMessage());
+                }
+                System.err.println("==================");
+                return Mono.just(
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .<LoginResponse>build());
+            });
     }
 
     @PostMapping("/change-password")
@@ -31,7 +41,6 @@ public class AuthController {
             .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).build()));
     }
 
-    /** Dev helper — GET /auth/hash?password=admin@panda123 → returns BCrypt hash */
     @GetMapping("/hash")
     public Mono<String> hash(@RequestParam String password) {
         return Mono.just(authService.hashPassword(password));
