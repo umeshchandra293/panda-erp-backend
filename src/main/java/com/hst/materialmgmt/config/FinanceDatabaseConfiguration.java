@@ -1,6 +1,9 @@
 package com.hst.materialmgmt.config;
 
-import io.r2dbc.spi.ConnectionFactories;
+import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.pool.ConnectionPoolConfiguration;
+import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
+import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -13,19 +16,49 @@ import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.ReactiveTransactionManager;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
+import java.time.Duration;
+
 @Configuration
 public class FinanceDatabaseConfiguration extends DatabaseConfiguration {
 
-    // Reads directly from DATABASE_URL env variable via spring.r2dbc.url
-    @Value("${spring.r2dbc.url}")
-    private String r2dbcUrl;
+    @Value("${erp.finance.api.db.hostName}")    private String  host;
+    @Value("${erp.finance.api.db.port}")         private int     port;
+    @Value("${erp.finance.api.db.databaseName}") private String  database;
+    @Value("${erp.finance.api.db.schemaName}")   private String  schema;
+    @Value("${erp.finance.api.db.username}")      private String  username;
+    @Value("${erp.finance.api.db.password}")      private String  password;
 
     @Bean
     @Primary
     @ConditionalOnMissingBean(ConnectionFactory.class)
     public ConnectionFactory connectionFactory() {
-        System.out.println("=== CONNECTING TO: " + r2dbcUrl + " ===");
-        return ConnectionFactories.get(r2dbcUrl);
+        System.out.println("=== DB HOST: " + host + " PORT: " + port + " DB: " + database + " ===");
+
+        PostgresqlConnectionConfiguration.Builder builder =
+            PostgresqlConnectionConfiguration.builder()
+                .host(host)
+                .port(port)
+                .database(database)
+                .schema(schema)
+                .username(username)
+                .password(password);
+
+        // Enable SSL for any non-localhost host (Neon, RDS, etc.)
+        if (host != null && !host.startsWith("localhost") && !host.equals("127.0.0.1")) {
+            builder.enableSsl();
+        }
+
+        ConnectionFactory cf = new PostgresqlConnectionFactory(builder.build());
+
+        return new ConnectionPool(
+            ConnectionPoolConfiguration.builder(cf)
+                .initialSize(1)
+                .maxSize(3)
+                .maxIdleTime(Duration.ofSeconds(20))
+                .maxLifeTime(Duration.ofMinutes(3))
+                .validationQuery("SELECT 1")
+                .build()
+        );
     }
 
     @Bean
@@ -42,19 +75,19 @@ public class FinanceDatabaseConfiguration extends DatabaseConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(TransactionalOperator.class)
-    public TransactionalOperator transactionalOperator(ReactiveTransactionManager transactionManager) {
-        return super.getTransactionalOperator(transactionManager);
+    public TransactionalOperator transactionalOperator(ReactiveTransactionManager tm) {
+        return super.getTransactionalOperator(tm);
     }
 
     @Bean
     @ConditionalOnMissingBean(ReactiveTransactionManager.class)
-    public ReactiveTransactionManager reactiveTransactionManager(ConnectionFactory connectionFactory) {
-        return super.getTransactionManager(connectionFactory);
+    public ReactiveTransactionManager reactiveTransactionManager(ConnectionFactory cf) {
+        return super.getTransactionManager(cf);
     }
 
     @Bean
     @ConditionalOnMissingBean(ConnectionFactoryInitializer.class)
-    public ConnectionFactoryInitializer connectionFactoryInitializer(ConnectionFactory connectionFactory) {
-        return super.getConnectionFactoryInitializer(connectionFactory);
+    public ConnectionFactoryInitializer connectionFactoryInitializer(ConnectionFactory cf) {
+        return super.getConnectionFactoryInitializer(cf);
     }
 }
