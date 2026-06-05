@@ -62,7 +62,6 @@ public class JwtAuthFilter implements WebFilter {
             res.setStatusCode(HttpStatus.UNAUTHORIZED);
             return res.setComplete();
         }
-
         return chain.filter(exchange);
     }
 }
