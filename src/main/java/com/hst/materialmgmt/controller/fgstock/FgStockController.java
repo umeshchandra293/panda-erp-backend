@@ -62,17 +62,21 @@ public class FgStockController {
 
     // ── Settle ────────────────────────────────────────────────────────────────
 
-    @PostMapping("/dispatches/{dispatchId}/settle")
-    public Mono<ResponseEntity<Void>> settle(
-            @PathVariable String dispatchId,
-            @RequestBody SettleRequest req) {
-        return service.settle(dispatchId, req)
-                .<ResponseEntity<Void>>thenReturn(ResponseEntity.<Void>ok().build())
-                .onErrorResume(e -> Mono.just(
-                        ResponseEntity.<Void>status(
-                                e.getMessage().contains("not found") ? 404 : 400
-                        ).build()));
-    }
+@PostMapping("/dispatches/{dispatchId}/settle")
+public Mono<ResponseEntity<Void>> settle(
+        @PathVariable String dispatchId,
+        @RequestBody SettleRequest req) {
+    return service.settle(dispatchId, req)
+            .<ResponseEntity<Void>>thenReturn(ResponseEntity.<Void>ok().build())
+            .doOnError(e -> System.err.println(
+                    "[SETTLE ERROR] dispatchId=" + dispatchId +
+                    " | " + e.getClass().getSimpleName() +
+                    " | " + e.getMessage()))
+            .onErrorResume(e -> Mono.just(
+                    ResponseEntity.<Void>status(
+                            e.getMessage() != null && e.getMessage().contains("not found") ? 404 : 400
+                    ).build()));
+}
 
     // ── Legacy single-product (kept for backward compat) ─────────────────────
 
