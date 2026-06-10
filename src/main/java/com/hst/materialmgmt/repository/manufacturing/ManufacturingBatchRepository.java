@@ -44,4 +44,17 @@ public class ManufacturingBatchRepository extends ParentRepositoryImpl {
                 .map((row, meta) -> row.get(0, Long.class)).one()
                 .map(n -> String.format("BATCH-%06d", n));
     }
+    public Mono<ManufacturingBatchEntity> findByBatchId(String batchId) {
+    return databaseClient.sql(
+        "SELECT * FROM rm_material_schema.manufacturing_batch_tbl WHERE batch_id = :id")
+        .bind("id", batchId)
+        .map((row, meta) -> rowMapper.apply(row, meta)).one();
+}
+
+public Mono<Void> deleteByShiftId(String shiftId) {
+    return databaseClient.sql(
+        "DELETE FROM rm_material_schema.manufacturing_batch_tbl WHERE shift_id = :shiftId")
+        .bind("shiftId", shiftId)
+        .fetch().rowsUpdated().then();
+}
 }

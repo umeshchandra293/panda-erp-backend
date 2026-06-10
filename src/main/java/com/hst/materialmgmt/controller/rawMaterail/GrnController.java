@@ -40,4 +40,20 @@ public class GrnController implements GrnApi {
         return grnRequest.flatMap(req -> rawMaterialService.createGrn(req))
                 .map(saved -> ResponseEntity.status(HttpStatus.CREATED).body(saved));
     }
+    @DeleteMapping("/grn/{grnId}")
+public Mono<ResponseEntity<Void>> deleteGrn(
+        @PathVariable String grnId) {
+    return rawMaterialService.deleteGrn(grnId)
+        .thenReturn(ResponseEntity.<Void>noContent().<Void>build())
+        .onErrorResume(e -> Mono.just(
+            ResponseEntity.<Void>status(500).build()));
+}
+
+@DeleteMapping("/inventory/reset-stock")
+public Mono<ResponseEntity<Void>> resetRmStock() {
+    return rawMaterialService.resetRmStock()
+        .thenReturn(ResponseEntity.<Void>noContent().<Void>build())
+        .onErrorResume(e -> Mono.just(
+            ResponseEntity.<Void>status(500).build()));
+}
 }

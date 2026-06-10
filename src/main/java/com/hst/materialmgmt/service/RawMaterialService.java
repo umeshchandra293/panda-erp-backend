@@ -182,4 +182,13 @@ public class RawMaterialService extends ParentBaseServiceImpl {
         r.setNotes(e.getNotes());
         return r;
     }
+    public Mono<Void> deleteGrn(String grnId) {
+    return movementRepo.deleteByReferenceId(grnId)   // reverse stock
+        .then(grnItemRepo.deleteByGrnId(grnId))       // delete line items
+        .then(grnRepo.deleteByGrnId(grnId));           // delete header
+}
+
+public Mono<Void> resetRmStock() {
+    return movementRepo.resetAllStock();
+}
 }

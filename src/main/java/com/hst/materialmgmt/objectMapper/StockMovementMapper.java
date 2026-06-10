@@ -20,10 +20,6 @@ public class StockMovementMapper extends BaseMapper {
                 ? (StockMovementEntity) entity
                 : new StockMovementEntity();
 
-        if (isNew && (e.getMovementId() == null || e.getMovementId().isBlank())) {
-            // movementId is set by service (via code generator) before calling this
-            // — preserve whatever was injected
-        }
         if (m.getMovementId() != null && !m.getMovementId().isBlank()) {
             e.setMovementId(m.getMovementId());
         }
@@ -33,11 +29,9 @@ public class StockMovementMapper extends BaseMapper {
         if (m.getMovementType() != null) {
             e.setMovementType(m.getMovementType().name());
         }
-
         if (m.getQuantity() != null) {
             e.setQuantity(BigDecimal.valueOf(m.getQuantity()));
         }
-
         if (m.getUnitCost() != null) {
             e.setUnitCost(BigDecimal.valueOf(m.getUnitCost()));
         }
@@ -68,25 +62,45 @@ public class StockMovementMapper extends BaseMapper {
         m.setMovementId(e.getMovementId());
         m.setMaterialId(e.getMaterialId());
 
+        // ── Safe enum conversions — unknown values stored in DB are skipped
+        // rather than crashing the entire response stream.
+
         if (e.getMovementType() != null) {
-            m.setMovementType(StockMovement.MovementTypeEnum.fromValue(e.getMovementType()));
+            try {
+                m.setMovementType(StockMovement.MovementTypeEnum.fromValue(e.getMovementType()));
+            } catch (IllegalArgumentException ex) {
+                // Unknown movement type — leave null, still return the movement
+            }
         }
+
         if (e.getQuantity() != null) {
             m.setQuantity(e.getQuantity().doubleValue());
         }
         if (e.getUnitCost() != null) {
             m.setUnitCost(e.getUnitCost().doubleValue());
         }
+
         m.setMovementDate(e.getMovementDate());
 
         if (e.getReferenceType() != null) {
-            m.setReferenceType(StockMovement.ReferenceTypeEnum.fromValue(e.getReferenceType()));
+            try {
+                m.setReferenceType(StockMovement.ReferenceTypeEnum.fromValue(e.getReferenceType()));
+            } catch (IllegalArgumentException ex) {
+                // Unknown reference type — skip
+            }
         }
+
         m.setReferenceId(e.getReferenceId());
 
         if (e.getReasonCode() != null) {
-            m.setReasonCode(StockMovement.ReasonCodeEnum.fromValue(e.getReasonCode()));
+            try {
+                m.setReasonCode(StockMovement.ReasonCodeEnum.fromValue(e.getReasonCode()));
+            } catch (IllegalArgumentException ex) {
+                // Unknown reason code (e.g. 'MANUAL', 'CORRECTION', 'PHYSICAL_COUNT')
+                // stored via manual adjust — skip rather than crash
+            }
         }
+
         m.setNotes(e.getNotes());
 
         return m;

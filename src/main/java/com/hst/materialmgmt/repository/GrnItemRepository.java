@@ -40,4 +40,10 @@ public class GrnItemRepository extends ParentRepositoryImpl {
                 .map((row, meta) -> row.get(0, Long.class)).one()
                 .map(n -> String.format("GRNI-%06d", n));
     }
+    public Mono<Void> deleteByGrnId(String grnId) {
+    return databaseClient.sql(
+        "DELETE FROM rm_material_schema.rm_grn_item_tbl WHERE grn_id = :grnId")
+        .bind("grnId", grnId)
+        .fetch().rowsUpdated().then();
+}
 }

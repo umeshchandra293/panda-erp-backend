@@ -14,6 +14,7 @@ import com.hst.api.model.MaterialStockSummary;
 import com.hst.api.model.StockMovement;
 import com.hst.api.model.TrendPoint;
 import com.hst.api.model.WastageReason;
+import com.hst.materialmgmt.entity.StockMovementEntity;
 import com.hst.materialmgmt.objectMapper.BaseMapper;
 import com.hst.materialmgmt.objectMapper.StockMovementMapper;
 import com.hst.materialmgmt.repository.ParentRepositoryImpl;
@@ -26,17 +27,17 @@ import reactor.core.publisher.Mono;
 public class StockMovementService extends ParentBaseServiceImpl {
 
     @Autowired private StockMovementRepository repository;
-    @Autowired private StockMovementMapper mapper;
-    @Autowired private MovementCodeGenerator codeGenerator;
+    @Autowired private StockMovementMapper      mapper;
+    @Autowired private MovementCodeGenerator    codeGenerator;
 
-    @Override protected BaseMapper getMapper() { return mapper; }
+    @Override protected BaseMapper          getMapper()           { return mapper; }
     @Override protected ParentRepositoryImpl getParentRepository() { return repository; }
 
     @Override
     public Mono<Object> createFullHierarchy(Mono<Object> parentMono) {
-        if (parentMono == null) {
+        if (parentMono == null)
             return Mono.error(new IllegalArgumentException("Movement cannot be null"));
-        }
+
         Mono<Object> codedMono = parentMono.flatMap(model -> {
             StockMovement m = (StockMovement) model;
             return codeGenerator.nextMovementCode()
@@ -45,7 +46,7 @@ public class StockMovementService extends ParentBaseServiceImpl {
         return super.createFullHierarchy(codedMono);
     }
 
-    // ─── Filter / list ─────────────────────────────────────────────
+    // ── Filter / list ─────────────────────────────────────────────────────────
 
     public Flux<StockMovement> findFiltered(
             String materialId, String movementType,
@@ -54,9 +55,7 @@ public class StockMovementService extends ParentBaseServiceImpl {
                 .map(entity -> (StockMovement) mapper.toModel(entity));
     }
 
-    // ─── Batch insert with negative stock guard ────────────────────
-    // For WASTAGE and CONSUMPTION: check current stock >= quantity before saving.
-    // For INBOUND and ADJUSTMENT: no stock check needed.
+    // ── Batch insert with negative stock guard ────────────────────────────────
 
     public Flux<StockMovement> createBatch(List<StockMovement> movements) {
         return Flux.fromIterable(movements)
@@ -65,50 +64,78 @@ public class StockMovementService extends ParentBaseServiceImpl {
                         .cast(StockMovement.class));
     }
 
-    // ─── Validate: prevent negative stock ─────────────────────────
+    // ── Validate: prevent negative stock for outbound movements ──────────────
 
     private Mono<Void> validateMovement(StockMovement m) {
-        // Only outbound movements can cause negative stock
         if (m.getMovementType() == null) return Mono.empty();
-        String type = m.getMovementType().name(); // enum.name() = "WASTAGE", "CONSUMPTION" etc
+        String type = m.getMovementType().name();
 
-        if (!type.equals("WASTAGE") && !type.equals("CONSUMPTION")) {
+        if (!type.equals("WASTAGE") && !type.equals("CONSUMPTION"))
             return Mono.empty();
-        }
 
-        if (m.getMaterialId() == null || m.getMaterialId().isBlank()) {
+        if (m.getMaterialId() == null || m.getMaterialId().isBlank())
             return Mono.error(new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "materialId is required"));
-        }
+                    HttpStatus.BAD_REQUEST, "materialId is required"));
 
-        // quantity is Double in the generated model
         double requested = m.getQuantity() != null ? m.getQuantity() : 0.0;
-        if (requested <= 0) {
+        if (requested <= 0)
             return Mono.error(new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "quantity must be > 0"));
-        }
+                    HttpStatus.BAD_REQUEST, "quantity must be > 0"));
 
-        // Get current stock on hand from DB and check sufficiency
         return repository.findStockOnHandWithMaster(
-                LocalDate.of(2000, 1, 1), LocalDate.now())
-            .filter(row -> m.getMaterialId().equals(row.materialId()))
-            .next()
-            .flatMap(row -> {
-                double currentStock = row.stockOnHand() != null
-                    ? row.stockOnHand().doubleValue() : 0.0;
-                if (requested > currentStock) {
-                    return Mono.error(new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        String.format(
-                            "Insufficient stock for %s — available: %.2f, requested: %.2f",
-                            m.getMaterialId(), currentStock, requested)));
-                }
-                return Mono.<Void>empty();
-            })
-            .then();
+                    LocalDate.of(2000, 1, 1), LocalDate.now())
+                .filter(row -> m.getMaterialId().equals(row.materialId()))
+                .next()
+                .flatMap(row -> {
+                    double currentStock = row.stockOnHand() != null
+                            ? row.stockOnHand().doubleValue() : 0.0;
+                    if (requested > currentStock)
+                        return Mono.error(new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                String.format("Insufficient stock for %s — available: %.2f, requested: %.2f",
+                                        m.getMaterialId(), currentStock, requested)));
+                    return Mono.<Void>empty();
+                })
+                .then();
     }
 
-    // ─── Dashboard aggregations ────────────────────────────────────
+    // ── Manual stock adjustment ───────────────────────────────────────────────
+    // Uses ADJUSTMENT movement type directly on the entity — bypasses generated
+    // StockMovement model and its validation annotations.
+    // SQL: ADJUSTMENT quantities are added directly to stock (negative = reduction).
+
+    public Mono<Void> manualAdjust(String materialId, double quantity,
+                                   boolean isReduction, String reasonCode, String notes) {
+        if (materialId == null || materialId.isBlank())
+            return Mono.error(new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "materialId is required"));
+        if (quantity <= 0)
+            return Mono.error(new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "quantity must be > 0"));
+
+        return codeGenerator.nextMovementCode().flatMap(code -> {
+            StockMovementEntity e = new StockMovementEntity();
+            e.setMovementId(code);
+            e.setMaterialId(materialId);
+            e.setMovementType("ADJUSTMENT");
+            // Negative quantity = reduction; SQL adds quantity directly to stock
+            e.setQuantity(isReduction
+                    ? BigDecimal.valueOf(quantity).negate()
+                    : BigDecimal.valueOf(quantity));
+            e.setMovementDate(LocalDate.now());
+            e.setReasonCode(reasonCode != null ? reasonCode : "MANUAL");
+            e.setNotes(notes != null ? notes : "");
+            return repository.createEntity(e);
+        });
+    }
+
+    // ── Reset all RM stock ────────────────────────────────────────────────────
+
+    public Mono<Void> resetAllStock() {
+        return repository.resetAllStock();
+    }
+
+    // ── Dashboard aggregations ────────────────────────────────────────────────
 
     public Mono<DashboardSummary> getDashboardSummary(LocalDate fromDate, LocalDate toDate) {
         Mono<List<MaterialStockSummary>> breakdownMono = repository
@@ -118,7 +145,7 @@ public class StockMovementService extends ParentBaseServiceImpl {
 
         return Mono.zip(repository.findKpiTotals(fromDate, toDate), breakdownMono)
                 .map(tuple -> {
-                    var totals   = tuple.getT1();
+                    var totals    = tuple.getT1();
                     var breakdown = tuple.getT2();
                     DashboardSummary s = new DashboardSummary();
                     s.setTotalInbound(safeDouble(totals.totalInbound()));
@@ -153,9 +180,10 @@ public class StockMovementService extends ParentBaseServiceImpl {
                 });
     }
 
-    // ─── Helpers ───────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private MaterialStockSummary toMaterialStockSummary(StockMovementRepository.MaterialStockRow r) {
+    private MaterialStockSummary toMaterialStockSummary(
+            StockMovementRepository.MaterialStockRow r) {
         MaterialStockSummary s = new MaterialStockSummary();
         s.setMaterialId(r.materialId());
         s.setMaterialName(r.materialName());
@@ -169,13 +197,35 @@ public class StockMovementService extends ParentBaseServiceImpl {
         s.setSafetyStockLevel(safeDouble(r.safetyStockLevel()));
         Double stock = s.getStockOnHand();
         if (stock != null) {
-            s.setBelowReorder(s.getReorderLevel() != null && stock < s.getReorderLevel());
-            s.setBelowSafety(s.getSafetyStockLevel() != null && stock < s.getSafetyStockLevel());
+            s.setBelowReorder(s.getReorderLevel()      != null && stock < s.getReorderLevel());
+            s.setBelowSafety(s.getSafetyStockLevel()   != null && stock < s.getSafetyStockLevel());
         }
         return s;
     }
 
-    private static Double safeDouble(java.math.BigDecimal bd) {
+    private static Double safeDouble(BigDecimal bd) {
         return bd == null ? 0.0 : bd.doubleValue();
+    }
+
+    // ── findByReferenceId — get movements for a shift ─────────────────────────
+
+    public Flux<StockMovement> findByReferenceId(String referenceId, String movementType) {
+        return repository.findByReferenceId(referenceId, movementType)
+                .map(entity -> (StockMovement) mapper.toModel(entity));
+    }
+
+    // ── updateMovementQuantity ────────────────────────────────────────────────
+
+    public Mono<Void> updateMovementQuantity(String movementId, double quantity) {
+        if (quantity <= 0)
+            return Mono.error(new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "quantity must be > 0"));
+        return repository.updateMovementQty(movementId, BigDecimal.valueOf(quantity));
+    }
+
+    // ── deleteMovement ────────────────────────────────────────────────────────
+
+    public Mono<Void> deleteMovement(String movementId) {
+        return repository.deleteMovement(movementId);
     }
 }

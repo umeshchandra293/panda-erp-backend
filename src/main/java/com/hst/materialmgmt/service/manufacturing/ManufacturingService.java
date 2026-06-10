@@ -43,13 +43,8 @@ public class ManufacturingService {
         return batchRepo.findByShiftId(shiftId);
     }
 
-    /**
-     * Create shift:
-     * 1. Validate all BOM materials have sufficient stock BEFORE saving anything
-     * 2. Generate shift ID
-     * 3. Save shift header
-     * 4. For each batch: save batch + deduct raw materials via BOM + update FG stock
-     */
+    // ── Create shift ──────────────────────────────────────────────────────────
+
     public Mono<ManufacturingShiftEntity> createShift(
             ManufacturingShiftEntity shift,
             List<ManufacturingBatchEntity> batches) {
@@ -60,7 +55,6 @@ public class ManufacturingService {
         shift.setTotalRejected(totalRejected);
         shift.setStatus("CONFIRMED");
 
-        // ── Step 1: validate all materials have enough stock before saving anything ──
         return validateAllMaterialsHaveStock(batches)
                 .then(shiftRepo.nextShiftId())
                 .flatMap(shiftId -> {
@@ -73,11 +67,96 @@ public class ManufacturingService {
                 });
     }
 
-    /**
-     * Check every BOM material across all batches has sufficient stock.
-     * Aggregates total consumption per material, then checks each against stock on hand.
-     * Rejects with 400 if ANY material would go negative.
-     */
+    // ── Update shift header ───────────────────────────────────────────────────
+    // Updates date, operatorName, shiftType, notes only.
+    // Does NOT adjust stock movements — quantities are locked after creation.
+
+    public Mono<ManufacturingShiftEntity> updateShift(String shiftId,
+                                                       ManufacturingShiftEntity updates) {
+        return shiftRepo.findById(shiftId)
+                .cast(ManufacturingShiftEntity.class)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Shift not found: " + shiftId)))
+                .flatMap(existing -> {
+                    existing.setShiftDate(updates.getShiftDate() != null
+                            ? updates.getShiftDate() : existing.getShiftDate());
+                    existing.setOperatorName(updates.getOperatorName() != null
+                            ? updates.getOperatorName() : existing.getOperatorName());
+                    existing.setShiftType(updates.getShiftType() != null
+                            ? updates.getShiftType() : existing.getShiftType());
+                    existing.setNotes(updates.getNotes() != null
+                            ? updates.getNotes() : existing.getNotes());
+                    return shiftRepo.update(shiftId, existing)
+                            .cast(ManufacturingShiftEntity.class);
+                });
+    }
+
+    // ── Update batch quantities ───────────────────────────────────────────────
+    // Updates actualQty and rejectedQty, recalculates shift totals.
+    // Note: stock movements are NOT reversed/adjusted — use inventory adjustment
+    // on the Inventory page if stock correction is needed.
+
+    public Mono<ManufacturingBatchEntity> updateBatch(String batchId,
+                                                       int actualQty, int rejectedQty) {
+        return batchRepo.findByBatchId(batchId)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Batch not found: " + batchId)))
+                .flatMap(batch -> {
+                    batch.setActualQty(actualQty);
+                    batch.setRejectedQty(rejectedQty);
+                    return batchRepo.update(batchId, batch)
+                            .cast(ManufacturingBatchEntity.class)
+                            .flatMap(updated ->
+                                // Recalculate shift totals
+                                batchRepo.findByShiftId(batch.getShiftId())
+                                    .collectList()
+                                    .flatMap(allBatches -> {
+                                        int newTotal    = allBatches.stream().mapToInt(b -> b.getActualQty()   != null ? b.getActualQty()   : 0).sum();
+                                        int newRejected = allBatches.stream().mapToInt(b -> b.getRejectedQty() != null ? b.getRejectedQty() : 0).sum();
+                                        return shiftRepo.findById(batch.getShiftId())
+                                                .cast(ManufacturingShiftEntity.class)
+                                                .flatMap(shift -> {
+                                                    shift.setTotalUnits(newTotal);
+                                                    shift.setTotalRejected(newRejected);
+                                                    return shiftRepo.update(batch.getShiftId(), shift);
+                                                });
+                                    })
+                                    .thenReturn(updated));
+                });
+    }
+
+    // ── Delete shift ──────────────────────────────────────────────────────────
+    // Deletes:  shift header + all batches + RM consumption movements
+    // Reverses: FG stock quantities produced by this shift
+    // Does NOT reverse: FG dispatch records already made from this stock
+
+    public Mono<Void> deleteShift(String shiftId) {
+        return shiftRepo.findById(shiftId)
+                .cast(ManufacturingShiftEntity.class)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Shift not found: " + shiftId)))
+                .flatMap(shift ->
+                    // 1. Reverse FG stock for each batch
+                    batchRepo.findByShiftId(shiftId)
+                        .flatMap(batch -> {
+                            int qty = batch.getActualQty() != null ? batch.getActualQty() : 0;
+                            if (qty <= 0) return Mono.empty();
+                            // Subtract from FG stock (negative = reduction)
+                            return fgStockService.addStock(batch.getProductId(), -qty, shiftId);
+                        })
+                        .then()
+                        // 2. Delete RM consumption movements for this shift
+                        .then(movementRepo.deleteByReferenceId(shiftId))
+                        // 3. Delete batch records
+                        .then(batchRepo.deleteByShiftId(shiftId))
+                        // 4. Delete shift header
+                        .then(shiftRepo.deleteById(shiftId))
+                        .then()
+                );
+    }
+
+    // ── Validation ────────────────────────────────────────────────────────────
+
     private Mono<Void> validateAllMaterialsHaveStock(List<ManufacturingBatchEntity> batches) {
         return Flux.fromIterable(batches)
                 .concatMap(batch -> {
@@ -87,7 +166,6 @@ public class ManufacturingService {
                             .flatMap(bom -> {
                                 BigDecimal required = bom.getQtyPerUnit()
                                         .multiply(BigDecimal.valueOf(qty));
-                                // Get current stock for this material
                                 return getCurrentStock(bom.getMaterialId())
                                         .flatMap(currentStock -> {
                                             if (required.compareTo(currentStock) > 0) {
@@ -107,10 +185,6 @@ public class ManufacturingService {
                 }).then();
     }
 
-    /**
-     * Get current stock on hand for a material:
-     * SUM(INBOUND + ADJUSTMENT) - SUM(CONSUMPTION + WASTAGE)
-     */
     private Mono<BigDecimal> getCurrentStock(String materialId) {
         return movementRepo.findFiltered(materialId, null, null, null)
                 .reduce(BigDecimal.ZERO, (stock, movement) -> {
@@ -140,9 +214,6 @@ public class ManufacturingService {
         });
     }
 
-    /**
-     * Insert CONSUMPTION movements — stock check already passed in validateAllMaterialsHaveStock.
-     */
     private Mono<Void> deductRawMaterials(String shiftId, String productId, int actualQty) {
         if (actualQty <= 0) return Mono.empty();
         return bomRepo.findByProductId(productId)

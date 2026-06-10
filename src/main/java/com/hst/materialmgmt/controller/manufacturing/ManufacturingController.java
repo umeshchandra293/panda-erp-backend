@@ -9,6 +9,7 @@ import com.hst.materialmgmt.entity.manufacturing.ManufacturingBatchEntity;
 import com.hst.materialmgmt.entity.manufacturing.ManufacturingBomEntity;
 import com.hst.materialmgmt.entity.manufacturing.ManufacturingShiftEntity;
 import com.hst.materialmgmt.service.manufacturing.ManufacturingService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import reactor.core.publisher.Mono;
 
@@ -23,9 +24,7 @@ public class ManufacturingController {
 
     @GetMapping("/shifts")
     public Mono<ResponseEntity<List<ManufacturingShiftEntity>>> getAllShifts() {
-        return service.getAllShifts()
-                .collectList()
-                .map(ResponseEntity::ok);
+        return service.getAllShifts().collectList().map(ResponseEntity::ok);
     }
 
     @GetMapping("/shifts/{shiftId}")
@@ -39,9 +38,7 @@ public class ManufacturingController {
     @GetMapping("/shifts/{shiftId}/batches")
     public Mono<ResponseEntity<List<ManufacturingBatchEntity>>> getBatches(
             @PathVariable String shiftId) {
-        return service.getBatchesByShift(shiftId)
-                .collectList()
-                .map(ResponseEntity::ok);
+        return service.getBatchesByShift(shiftId).collectList().map(ResponseEntity::ok);
     }
 
     @PostMapping("/shifts")
@@ -51,21 +48,62 @@ public class ManufacturingController {
                 .map(saved -> ResponseEntity.status(HttpStatus.CREATED).body(saved));
     }
 
+    // ── Update shift header ───────────────────────────────────────────────────
+
+    @PutMapping("/shifts/{shiftId}")
+    @Operation(summary = "Update shift header — date, operator, shift type")
+    public Mono<ResponseEntity<ManufacturingShiftEntity>> updateShift(
+            @PathVariable String shiftId,
+            @RequestBody ManufacturingShiftEntity updates) {
+        return service.updateShift(shiftId, updates)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(
+                        e.getMessage() != null && e.getMessage().contains("not found")
+                                ? ResponseEntity.notFound().build()
+                                : ResponseEntity.<ManufacturingShiftEntity>status(
+                                        HttpStatus.BAD_REQUEST).build()));
+    }
+
+    // ── Update batch quantities ───────────────────────────────────────────────
+
+    @PutMapping("/batches/{batchId}")
+    @Operation(summary = "Update batch quantities — actualQty and rejectedQty")
+    public Mono<ResponseEntity<ManufacturingBatchEntity>> updateBatch(
+            @PathVariable String batchId,
+            @RequestBody BatchUpdateRequest req) {
+        return service.updateBatch(batchId, req.actualQty(), req.rejectedQty())
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(
+                        e.getMessage() != null && e.getMessage().contains("not found")
+                                ? ResponseEntity.notFound().build()
+                                : ResponseEntity.<ManufacturingBatchEntity>status(
+                                        HttpStatus.BAD_REQUEST).build()));
+    }
+
+    // ── Delete shift ──────────────────────────────────────────────────────────
+
+    @DeleteMapping("/shifts/{shiftId}")
+    @Operation(summary = "Delete shift — reverses RM stock, removes FG production")
+    public Mono<ResponseEntity<Void>> deleteShift(@PathVariable String shiftId) {
+        return service.deleteShift(shiftId)
+                .thenReturn(ResponseEntity.<Void>noContent().<Void>build())
+                .onErrorResume(e -> Mono.just(
+                        e.getMessage() != null && e.getMessage().contains("not found")
+                                ? ResponseEntity.<Void>notFound().build()
+                                : ResponseEntity.<Void>status(HttpStatus.INTERNAL_SERVER_ERROR).build()));
+    }
+
     // ── BOM ───────────────────────────────────────────────────────────────────
 
     @GetMapping("/bom")
     public Mono<ResponseEntity<List<ManufacturingBomEntity>>> getAllBoms() {
-        return service.getAllBoms()
-                .collectList()
-                .map(ResponseEntity::ok);
+        return service.getAllBoms().collectList().map(ResponseEntity::ok);
     }
 
     @GetMapping("/bom/{productId}")
     public Mono<ResponseEntity<List<ManufacturingBomEntity>>> getBomByProduct(
             @PathVariable String productId) {
-        return service.getBomByProduct(productId)
-                .collectList()
-                .map(ResponseEntity::ok);
+        return service.getBomByProduct(productId).collectList().map(ResponseEntity::ok);
     }
 
     @PostMapping("/bom")
@@ -90,8 +128,15 @@ public class ManufacturingController {
                 .thenReturn(ResponseEntity.<Void>noContent().build());
     }
 
+    // ── Request records ───────────────────────────────────────────────────────
+
     public record ShiftRequest(
-        ManufacturingShiftEntity shift,
+        ManufacturingShiftEntity       shift,
         List<ManufacturingBatchEntity> batches
+    ) {}
+
+    public record BatchUpdateRequest(
+        int actualQty,
+        int rejectedQty
     ) {}
 }
